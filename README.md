@@ -5,7 +5,7 @@
 The Clerical Resolution Online Widget (CROW) is an open-source application
 designed to facilitate the clerical review of linked data.
 
-CROW reads linked data files, presents it in an easy-to-read-and-compare format
+CROW reads linked data files, presents it in an easy-to-read-and-compare format,
 and has tools that can help the clerical reviewer with match/non-match
 decisions.
 
