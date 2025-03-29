@@ -49,7 +49,7 @@ body{
       white 0%,
       white 35%,
       slategray 35%,
-      slategray 100% 
+      slategray 100%
     )
 }
 */
@@ -86,7 +86,7 @@ body{
 /*
 .font {
   content:"";
- 
+
 }
 */
 
@@ -119,7 +119,7 @@ body{
 
 .image {
   background:url_for('static', filename='crow.png')}};
-  
+
 }
 */
 
@@ -145,7 +145,7 @@ h1 {
   color: #f7f7f8;
 /*  font-family: sans-serif, Arial;*/
   font-size: 50px;
-  size: 15em;  
+  size: 15em;
   margin: 20px;
   text-align: center;
 }
@@ -154,7 +154,7 @@ h2 {
 /*  color: #b3b0a2;*/
   color: #f7f7f8;
 /*  font-family: sans-serif, Arial;*/
-  size: 15em; 
+  size: 15em;
   font-size: 40px;
   margin: 20px;
   text-align: center;
@@ -164,7 +164,7 @@ p{
   color: #033fa0;
 /*  font-family: sans-serif, Arial;*/
   font-size: 14px;
-  size: 2.5em;  
+  size: 2.5em;
   font-weight: bold;
 }
 
@@ -243,5 +243,3 @@ p{
 .submit-toolbar label:hover {
   background-color: #72bce9;
 }
-
-

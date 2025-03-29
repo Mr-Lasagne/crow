@@ -101,7 +101,7 @@ h1 {
   color: #033fa0;;
   font-family: sans-serif, Arial;
   font-size: 50px;
-  size: 15em;  
+  size: 15em;
   margin: 20px;
   text-align: center;
 }
@@ -111,7 +111,7 @@ h1 {
 h2 {
   color: #033fa0;;
   font-family: sans-serif, Arial;
-  size: 15em; 
+  size: 15em;
   font-size: 20px;
   margin: 20px;
   text-align: center;
@@ -122,7 +122,7 @@ h3 {
   font-family: sans-serif, Arial;
 /*
   font-size: 14px;
-  size: 2.5em;  
+  size: 2.5em;
 */
   font-weight: bold;
   text-align: center;
@@ -132,7 +132,7 @@ p{
   color: #033fa0;
   font-family: sans-serif, Arial;
   font-size: 14px;
-  size: 2.5em;  
+  size: 2.5em;
   font-weight: bold;
   text-align: center;
 }
@@ -211,7 +211,7 @@ p{
     font-size: 16px;
     border: 2px solid #444;
     border-radius: 12px;
-    color: #033fa0; 
+    color: #033fa0;
 }
 
 .input_file label:hover {
@@ -271,7 +271,7 @@ p{
 .submit-toolbar input[type="radio"]:checked + label {
     background-color:#bfb;
     border-color: #4c4;
-  
+
 }
 
 
@@ -284,7 +284,7 @@ p{
 .table {
 border-collapse: collapse;
 margin: 1rem;
-background-color: #f5f5dc  
+background-color: #f5f5dc
 }
 
 .table__row:nth-child(even) {
@@ -306,4 +306,3 @@ padding: 8px;
  background-color: #FFFFFF;
 }
 */
-
