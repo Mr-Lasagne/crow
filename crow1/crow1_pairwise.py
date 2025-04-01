@@ -34,27 +34,16 @@ import pandas as pd
 class IntroWindow:
     """Prompt the user to choose a file to review."""
 
-    def __init__(self, root: tk.Tk, init_dir: str) -> None:
+    def __init__(self, root: tk.Tk, initial_directory: str) -> None:
         """Initialse the IntroWindow class."""
-        # Initialise the GUI paramaters.
         self.root = root
-        self.root.geometry("400x225")
-        self.root.title("Clerical Matching")
+        self.initial_directory = initial_directory
 
-        # Initialise some variables.
-        self.init_dir = init_dir
+        self.root.geometry("300x170")
+        self.root.title("CROW")
 
-        # Initialise the frame.
-        self.content = ttk.Frame(self.root)
-        self.frame = ttk.Frame(
-            self.content, borderwidth=5, relief="ridge", width=500, height=300
-        )
-        self.content.grid(column=0, row=0)
-        self.frame.grid(column=0, row=0, columnspan=5, rowspan=5)
-
-        # Create some widgets and place them on the GUI.
         self.intro_text = ttk.Label(
-            self.content,
+            self.root,
             text=(
                 "Welcome to the Clerical Matching Application.\n"
                 'Please click "Choose File" to select your file\n'
@@ -62,18 +51,17 @@ class IntroWindow:
             ),
             font="Helvetica 10",
         )
-        self.intro_text.grid(row=1, column=0, columnspan=4)
+        self.intro_text.pack(pady=20)
 
-        # Create the button.
         self.choose_file_button = ttk.Button(
-            self.content, text="Choose File", command=self.open_dirfinder
+            self.root, text="Choose File", command=self.open_file_dialog
         )
-        self.choose_file_button.grid(row=2, column=1, columnspan=1, sticky="new")
+        self.choose_file_button.pack(ipadx=25, pady=10)
 
-    def open_dirfinder(self) -> None:
-        """Allow the user to choose a file and end the GUI."""
+    def open_file_dialog(self) -> None:
+        """Open a file dialog and close the window after selection."""
         self.fileselect = filedialog.askopenfilename(
-            initialdir=self.init_dir,
+            initialdir=self.initial_directory,
             filetypes=[("CSV Files", "*.csv")],
         )
         self.root.destroy()
@@ -914,7 +902,7 @@ if __name__ == "__main__":
     config.read("crow1_pairwise_config.ini")
 
     # Get the initial directory folder.
-    initdir = config["matching_files_details"]["file_pathway"]
+    initial_directory = config["matching_files_details"]["file_pathway"]
 
     # Grab user credentials
     user = getpass.getuser()
@@ -924,9 +912,7 @@ if __name__ == "__main__":
     # Open a file pen dialog box, allow user to choose file, then grab
     # user credentials.
     root = tk.Tk()
-    # Run the intro GUI.
-    intro = IntroWindow(root, initdir)
-
+    intro_window = IntroWindow(root, initial_directory)
     root.mainloop()
 
     # END OF STEP 1
@@ -941,38 +927,39 @@ if __name__ == "__main__":
     # Check if the user running it has selected this file before (this
     # means they have done some of the matching already and are coming
     # back to it).
-    if "inProgress" in intro.fileselect.split("/")[-1]:
+    if "inProgress" in intro_window.fileselect.split("/")[-1]:
         # If it is the same user.
-        if user in intro.fileselect.split("/")[-1]:
+        if user in intro_window.fileselect.split("/")[-1]:
             # Do not rename the file.
-            renamed_file = intro.fileselect
+            renamed_file = intro_window.fileselect
 
             # Create the filepath name for when the file is finished.
             filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
 
         else:
             # Rename the file to contain the additional user.
-            renamed_file = f"{'/'.join(intro.fileselect.split('/')[:-1])}/{intro.fileselect.split('/')[-1].split('.')[0][0:-11]}_{user}_inProgress.{intro.fileselect.split('/')[-1].split('.')[-1]}"
-            os.rename(rf"{intro.fileselect}", rf"{renamed_file}")
+            renamed_file = f"{'/'.join(intro_window.fileselect.split('/')[:-1])}/{intro_window.fileselect.split('/')[-1].split('.')[0][0:-11]}_{user}_inProgress.{intro_window.fileselect.split('/')[-1].split('.')[-1]}"
+            os.rename(rf"{intro_window.fileselect}", rf"{renamed_file}")
 
             # Create the filepath name for when the file is finished.
             filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
 
     # If a user is picking this file again and its done.
-    elif "DONE" in intro.fileselect.split("/")[-1]:
+
+    elif "DONE" in intro_window.fileselect.split("/")[-1]:
         # If it is the same user.
-        if user in intro.fileselect.split("/")[-1]:
+        if user in intro_window.fileselect.split("/")[-1]:
             # Do not change filepath done - keep it as it is.
-            filepath_done = intro.fileselect
+            filepath_done = intro_window.fileselect
 
             # Rename the file.
-            renamed_file = f"{'/'.join(intro.fileselect.split('/')[:-1])}/{intro.fileselect.split('/')[-1][0:-9]}_inProgress.{intro.fileselect.split('/')[-1].split('.')[-1]}"
-            os.rename(rf"{intro.fileselect}", rf"{renamed_file}")
+            renamed_file = f"{'/'.join(intro_window.fileselect.split('/')[:-1])}/{intro_window.fileselect.split('/')[-1][0:-9]}_inProgress.{intro_window.fileselect.split('/')[-1].split('.')[-1]}"
+            os.rename(rf"{intro_window.fileselect}", rf"{renamed_file}")
         else:
             # If it is a different user: rename the file to include the
             # additional user.
-            renamed_file = f"{'/'.join(intro.fileselect.split('/')[:-1])}/{intro.fileselect.split('/')[-1].split('.')[0][0:-5]}_{user}_inProgress.{intro.fileselect.split('/')[-1].split('.')[-1]}"
-            os.rename(rf"{intro.fileselect}", rf"{renamed_file}")
+            renamed_file = f"{'/'.join(intro_window.fileselect.split('/')[:-1])}/{intro_window.fileselect.split('/')[-1].split('.')[0][0:-5]}_{user}_inProgress.{intro_window.fileselect.split('/')[-1].split('.')[-1]}"
+            os.rename(rf"{intro_window.fileselect}", rf"{renamed_file}")
 
             # Create the filepath done.
             filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
@@ -981,8 +968,8 @@ if __name__ == "__main__":
         # Resave this file with the user ID at the end so no one else
         # selects it rename it with '_inProgress' and their entered
         # initials.
-        renamed_file = f"{'/'.join(intro.fileselect.split('/')[:-1])}/{intro.fileselect.split('/')[-1].split('.')[0]}_{user}_inProgress.{intro.fileselect.split('/')[-1].split('.')[-1]}"
-        os.rename(rf"{intro.fileselect}", rf"{renamed_file}")
+        renamed_file = f"{'/'.join(intro_window.fileselect.split('/')[:-1])}/{intro_window.fileselect.split('/')[-1].split('.')[0]}_{user}_inProgress.{intro_window.fileselect.split('/')[-1].split('.')[-1]}"
+        os.rename(rf"{intro_window.fileselect}", rf"{renamed_file}")
 
         # Create the filepath name for when the file is finished.
         filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
