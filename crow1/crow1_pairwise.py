@@ -26,7 +26,7 @@ import configparser
 import getpass
 import os
 import tkinter as tk
-from tkinter import filedialog, ttk
+from tkinter import filedialog, messagebox, ttk
 
 import pandas as pd
 
@@ -51,12 +51,12 @@ class IntroWindow:
             ),
             font="Helvetica 10",
         )
-        self.intro_text.pack(pady=20)
+        self.intro_text.pack(pady=25)
 
         self.choose_file_button = ttk.Button(
             self.root, text="Choose File", command=self.open_file_dialog
         )
-        self.choose_file_button.pack(ipadx=25, pady=10)
+        self.choose_file_button.pack(ipadx=30, pady=10)
 
     def open_file_dialog(self) -> None:
         """Open a file dialog and close the window after selection."""
@@ -70,7 +70,7 @@ class IntroWindow:
 class ClericalApp:
     """Open a window that allows users to clerically review records."""
 
-    def __init__(self, root, working_file, filename_done, filename_old, config):
+    def __init__(self, root, working_file, filename_done, filename_old, config) -> None:
         # Create a title.
         root.title("Clerical Matching")
 
@@ -187,7 +187,7 @@ class ClericalApp:
         self.draw_record_frame()
         self.draw_tool_frame()
 
-    def draw_record_frame(self):
+    def draw_record_frame(self) -> None:
         row_adder = 0
         separator_adder = 2
 
@@ -206,25 +206,19 @@ class ClericalApp:
 
         for iterator, name_of_dataset in enumerate(config.options("dataset_names")):
             exec(
-                f"self.{name_of_dataset} = ttk.Label(self.record_frame, "
-                f'text=config["dataset_names"]["{name_of_dataset}"]+":", '
-                'font=f"Helvetica {self.text_size} bold")'
+                f'self.{name_of_dataset} = ttk.Label(self.record_frame, text=config["dataset_names"]["{name_of_dataset}"]+":", font=f"Helvetica {self.text_size} bold")'
             )
 
             exec(
-                f"self.{name_of_dataset}.grid(row=3+{row_adder}, column=0, "
-                'columnspan=1, padx=10, pady=3, sticky="w")'
+                f'self.{name_of_dataset}.grid(row=3+{row_adder}, column=0, columnspan=1, padx=10, pady=3, sticky="w")'
             )
 
             exec(
-                f"self.separator{iterator} = ttk.Separator(self.record_frame, "
-                'orient="horizontal")'
+                f'self.separator{iterator} = ttk.Separator(self.record_frame, orient="horizontal")'
             )
 
             exec(
-                f"self.separator{iterator}.grid(row={separator_adder}, column=0, "
-                'columnspan=len(config.options("column_headers_and_order"))+2, '
-                'sticky="ew")'
+                f'self.separator{iterator}.grid(row={separator_adder}, column=0, columnspan=len(config.options("column_headers_and_order"))+2, sticky="ew")'
             )
 
             # Update row_adder and separator_adder variables.
@@ -254,13 +248,11 @@ class ClericalApp:
             )
 
             exec(
-                f"self.{column_title} = ttk.Label(self.record_frame, "
-                f'text="{col_header[0]}", font=f"Helvetica {self.text_size} bold")'
+                f'self.{column_title} = ttk.Label(self.record_frame, text="{col_header[0]}", font=f"Helvetica {self.text_size} bold")'
             )
 
             exec(
-                f"self.{column_title}.grid(row=1, column=col_header[1], columnspan=1, "
-                "sticky=tk.W, padx=10, pady=3)"
+                f"self.{column_title}.grid(row=1, column=col_header[1], columnspan=1, sticky=tk.W, padx=10, pady=3)"
             )
 
             # Add the executed self.labels for the column headers to the
@@ -369,7 +361,7 @@ class ClericalApp:
 
             self.show_hide_differences()
 
-    def draw_button_frame(self):
+    def draw_button_frame(self) -> None:
         # Match/Non-Match buttons.
         self.match_button = tk.Button(
             self.button_frame,
@@ -421,7 +413,7 @@ class ClericalApp:
                     config["custom_settings"]["comment_values"]
                 ).split(",")
 
-    def draw_tool_frame(self):
+    def draw_tool_frame(self) -> None:
         # Create labels for tools bar.
         self.separator_tf_1 = ttk.Separator(self.toolFrame, orient="vertical")
         self.separator_tf_1.grid(
@@ -492,7 +484,7 @@ class ClericalApp:
         )
         self.save_button.grid(row=0, column=8, columnspan=1, sticky="e", padx=5, pady=5)
 
-    def show_hide_differences(self):
+    def show_hide_differences(self) -> None:
         if not self.show_hide_diff:
             # Make show show diff variable 1 so that next time this
             # function is called it will remove tags.
@@ -614,7 +606,7 @@ class ClericalApp:
                 for vals in self.difference_col_label_names[key]:
                     exec(f"self.{key}.tag_remove('{vals}', '1.0', 'end')")
 
-    def make_text_bold(self):
+    def make_text_bold(self) -> None:
         """Make the text bold or not bold."""
         if not self.text_bold_boolean:
             self.text_bold_boolean = 1
@@ -658,7 +650,7 @@ class ClericalApp:
                 elif working_file.iloc[i, -1] == 1 or working_file.iloc[i, -1] == 0:
                     pass
 
-    def update_gui(self):
+    def update_gui(self) -> None:
         """Update the different GUI labels based on the records."""
         if self.check_matching_done() == 0:
             # Configure the non-iterable labels.
@@ -691,13 +683,13 @@ class ClericalApp:
             else:
                 self.back_button.config(state="normal")
         elif self.check_matching_done() == 1:
-            tk.messagebox.showinfo(
+            messagebox.showinfo(
                 "Matching Finished",
                 "Matching Finished: Press save and close or use the\n"
                 "back button to return to the previous record",
             )
 
-    def update_df(self, match_res):
+    def update_df(self, match_res) -> None:
         """Update the DataFrame with the review outcome.
 
         1 == Match, 0 == Non-match
@@ -714,7 +706,7 @@ class ClericalApp:
         if int(config["custom_settings"]["commentbox"]):
             working_file.at[self.record_index, "Comments"] = self.comment_entry.get()
 
-    def save_at_checkpoint(self):
+    def save_at_checkpoint(self) -> None:
         """Save the data at an interval defined in the config file.
 
         This back up the data to that point.
@@ -770,7 +762,7 @@ class ClericalApp:
         else:
             return 0
 
-    def save_and_close(self):
+    def save_and_close(self) -> None:
         """Save the working_file and close the GUI."""
         # Check whether matching has now finished (i.e. they have
         # completed all records).
@@ -789,7 +781,7 @@ class ClericalApp:
         # Close down the app.
         root.destroy()
 
-    def update_index(self, event):
+    def update_index(self, event) -> None:
         """Update the overall index which cycles through the file.
 
         Additional functonality is directing to other functions to
@@ -822,7 +814,7 @@ class ClericalApp:
             # Update the GUI labels.
             self.update_gui()
 
-    def go_back(self):
+    def go_back(self) -> None:
         """Go back through records."""
         # If they have reached the end of matching.
         if self.record_index == len(working_file):
@@ -847,7 +839,7 @@ class ClericalApp:
         elif self.record_index == 0:
             pass
 
-    def change_text_size(self, size_change):
+    def change_text_size(self, size_change) -> None:
         """Change the size of the text.
 
         Also change the size of the window to fit the text.
@@ -870,12 +862,10 @@ class ClericalApp:
         # Clear recordframe.
         self.update_gui()
 
-    def on_exit(self):
+    def on_exit(self) -> None:
         """Close the app after asking if they want to save or not."""
         # If they click yes.
-        if tk.messagebox.askyesno(
-            "Exit", "Are you sure you want to exit WITHOUT saving?"
-        ):
+        if messagebox.askyesno("Exit", "Are you sure you want to exit WITHOUT saving?"):
             # Check if this is the first time they are accessing it.
             if not self.matching_previously_began & self.checkpointcounter != 0:
                 # Then rename the file removing their intial and
@@ -890,32 +880,16 @@ class ClericalApp:
 
 
 if __name__ == "__main__":
-    # ------
-    # Step 1:
-    # Load config file and get the file directory.
-    # Get user credentials.
-    # Open intro window and get user to choose file.
-    # ------
-
-    # Import the configs for the project.
     config = configparser.ConfigParser()
     config.read("crow1_pairwise_config.ini")
 
-    # Get the initial directory folder.
     initial_directory = config["matching_files_details"]["file_pathway"]
 
-    # Grab user credentials
     user = getpass.getuser()
 
-    # --- Open Intro GUI
-
-    # Open a file pen dialog box, allow user to choose file, then grab
-    # user credentials.
     root = tk.Tk()
     intro_window = IntroWindow(root, initial_directory)
     root.mainloop()
-
-    # END OF STEP 1
 
     # ------
     # Step 2:
