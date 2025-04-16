@@ -3,24 +3,23 @@ Functions used in the main application
 
 """
 
-
-
 import ast
-import os
-import subprocess
 import configparser
+import os
 import shutil
+import subprocess
 from multiprocessing import Process
-from markupsafe import Markup
-from flask import Flask, render_template, request, session
-import pandas as pd
-user = os.environ['HADOOP_USER_NAME']
-config = configparser.ConfigParser()
-config.read('config_flow.ini')
-rec_id=config['id_variables']['record_id']
-clust_id=config['id_variables']['cluster_id']
-user = os.environ['HADOOP_USER_NAME']
 
+import pandas as pd
+from flask import request, session
+from markupsafe import Markup
+
+user = os.environ["HADOOP_USER_NAME"]
+config = configparser.ConfigParser()
+config.read("config_flow.ini")
+rec_id = config["id_variables"]["record_id"]
+clust_id = config["id_variables"]["cluster_id"]
+user = os.environ["HADOOP_USER_NAME"]
 
 
 def advance_cluster(dataframe):
@@ -32,17 +31,33 @@ def advance_cluster(dataframe):
     Returns: None
 
     """
-    num_in_cluster=len(dataframe.loc[dataframe['Sequential_Cluster_Id']==session['index']])
+    num_in_cluster = len(
+        dataframe.loc[dataframe["Sequential_Cluster_Id"] == session["index"]]
+    )
 
-    list_decided=[set(ast.literal_eval(i)) for i in dataframe.loc[dataframe['Sequential_Cluster_Id']==session['index']]['Match']]
+    list_decided = [
+        set(ast.literal_eval(i))
+        for i in dataframe.loc[dataframe["Sequential_Cluster_Id"] == session["index"]][
+            "Match"
+        ]
+    ]
 
-    uni_set_decided={x for l in list_decided for x in l}
+    uni_set_decided = {x for item in list_decided for x in item}
 
-    num_decided=len(uni_set_decided)
-    if (num_in_cluster-num_decided)==0:
-        for r_id in [x for x in dataframe.loc[dataframe['Sequential_Cluster_Id']==session['index']][rec_id] if x not in uni_set_decided]:
-            dataframe.loc[dataframe[rec_id]==r_id,'Match']=f"['No Match In Cluster For {r_id}']"
-        session['index'] = int(session['index'])+ 1
+    num_decided = len(uni_set_decided)
+    if (num_in_cluster - num_decided) == 0:
+        for r_id in [
+            x
+            for x in dataframe.loc[
+                dataframe["Sequential_Cluster_Id"] == session["index"]
+            ][rec_id]
+            if x not in uni_set_decided
+        ]:
+            dataframe.loc[dataframe[rec_id] == r_id, "Match"] = (
+                f"['No Match In Cluster For {r_id}']"
+            )
+        session["index"] = int(session["index"]) + 1
+
 
 def check_matching_done(dataframe):
     """
@@ -52,15 +67,13 @@ def check_matching_done(dataframe):
     Returns: Boolean
 
     """
-    if len(dataframe[dataframe.Match == '[]'])>0:
+    if len(dataframe[dataframe.Match == "[]"]) > 0:
         return 0
-    if len(dataframe[dataframe.Match == '[]'])==0:
+    if len(dataframe[dataframe.Match == "[]"]) == 0:
         return 1
 
 
-
-
-def get_save_paths(origin_file_path,origin_file_path_fl):
+def get_save_paths(origin_file_path, origin_file_path_fl):
     """
     Takes the input filepath and creates a filepaths for the inprogress
     and done status of that file.
@@ -70,70 +83,58 @@ def get_save_paths(origin_file_path,origin_file_path_fl):
 
 
     """
-    if 'inprogress' in origin_file_path_fl[-1]:
-
+    if "inprogress" in origin_file_path_fl[-1]:
         # If it is the same user
         if user in origin_file_path_fl[-1]:
             # Dont rename the file
-            in_prog_path= origin_file_path
-            end_file_name=origin_file_path_fl[-1][:-11]+ '_done'
+            in_prog_path = origin_file_path
+            end_file_name = origin_file_path_fl[-1][:-11] + "_done"
 
             # create the filepath name for when the file is finished
-            filepath_done = "/".join(origin_file_path_fl[:-1]+[end_file_name])
+            filepath_done = "/".join(origin_file_path_fl[:-1] + [end_file_name])
 
         else:
-
-            print('USER_NOT_IN_NAME')
+            print("USER_NOT_IN_NAME")
 
             # Rename the file to contain the additional user
 
-            in_prog_name = origin_file_path_fl[-1][:-11]+f'_{user}'+'_inprogress'
-            in_prog_path="/".join(origin_file_path_fl[:-1]+[in_prog_name])
+            in_prog_name = origin_file_path_fl[-1][:-11] + f"_{user}" + "_inprogress"
+            in_prog_path = "/".join(origin_file_path_fl[:-1] + [in_prog_name])
 
-            end_file_name=origin_file_path_fl[-1][:-11]+f'_{user}'+'_done'
-            filepath_done="/".join(origin_file_path_fl[:-1]+[end_file_name])
-
-
-
+            end_file_name = origin_file_path_fl[-1][:-11] + f"_{user}" + "_done"
+            filepath_done = "/".join(origin_file_path_fl[:-1] + [end_file_name])
 
         # If a user is picking this file again and its done
-    elif 'done' in origin_file_path_fl[-1]:
-
+    elif "done" in origin_file_path_fl[-1]:
         # If it is the same user
         if user in origin_file_path_fl[-1]:
             # dont change filepath done - keep it as it is
             filepath_done = origin_file_path
 
             # Rename the file
-            in_prog_name=origin_file_path_fl[-1][:-5]+'_inprogress'
-            in_prog_path="/".join(origin_file_path_fl[:-1]+ [in_prog_name])
-
+            in_prog_name = origin_file_path_fl[-1][:-5] + "_inprogress"
+            in_prog_path = "/".join(origin_file_path_fl[:-1] + [in_prog_name])
 
         else:
             # If it is a different user
             # Rename the file to include the additional user
-            in_prog_name=origin_file_path_fl[-1][:-5]+f'_{user}'+'_inprogress'
-            in_prog_path="/".join(origin_file_path_fl[:-1] +[in_prog_name])
+            in_prog_name = origin_file_path_fl[-1][:-5] + f"_{user}" + "_inprogress"
+            in_prog_path = "/".join(origin_file_path_fl[:-1] + [in_prog_name])
 
             # create the filepath done
-            end_file_name=in_prog_name[:-11]+'_DONE'
-            filepath_done="/".join(origin_file_path_fl[:-1] +[end_file_name ])
-
+            end_file_name = in_prog_name[:-11] + "_DONE"
+            filepath_done = "/".join(origin_file_path_fl[:-1] + [end_file_name])
 
     else:
-        in_prog_name=origin_file_path_fl[-1]+f'_{user}'+'_inprogress'
-        in_prog_path="/".join(origin_file_path_fl[:-1]+[in_prog_name])
-        end_file_name=origin_file_path_fl[-1]+f'_{user}'+'_done'
-        filepath_done="/".join(origin_file_path_fl[:-1]+ [end_file_name])
+        in_prog_name = origin_file_path_fl[-1] + f"_{user}" + "_inprogress"
+        in_prog_path = "/".join(origin_file_path_fl[:-1] + [in_prog_name])
+        end_file_name = origin_file_path_fl[-1] + f"_{user}" + "_done"
+        filepath_done = "/".join(origin_file_path_fl[:-1] + [end_file_name])
 
     return in_prog_path, filepath_done
 
 
-
-
-
-
-def get_hadoop(hdfs_path,local_path ):
+def get_hadoop(hdfs_path, local_path):
     """
     A function to take a copy a file from hdfs to the local filespace
 
@@ -143,11 +144,12 @@ def get_hadoop(hdfs_path,local_path ):
 
     """
 
-    process = subprocess.Popen(["hadoop", "fs","-get",hdfs_path,local_path])
+    process = subprocess.Popen(["hadoop", "fs", "-get", hdfs_path, local_path])
 
     process.communicate()
 
-def save_hadoop(local_path,hdfs_path):
+
+def save_hadoop(local_path, hdfs_path):
     """
     A function to take a copy a file from local folder to hdfs
 
@@ -156,30 +158,35 @@ def save_hadoop(local_path,hdfs_path):
     Returns: None
     """
 
-
-    process = subprocess.Popen(["hadoop", "fs","-put",local_path,hdfs_path ])
+    process = subprocess.Popen(["hadoop", "fs", "-put", local_path, hdfs_path])
 
     process.communicate()
 
 
-
-
 def remove_hadoop(hdfs_path):
-
-    file_test = subprocess.run(f"hdfs dfs -test -f {hdfs_path}", shell=True, stdout=subprocess.PIPE, check=False)
-    dir_test = subprocess.run(f"hdfs dfs -test -d {hdfs_path}", shell=True, stdout=subprocess.PIPE,check= False)
-    if file_test.returncode==0:
-
-        command='-rm'
-        process = subprocess.Popen(["hadoop", "fs",command,hdfs_path ])
+    file_test = subprocess.run(
+        f"hdfs dfs -test -f {hdfs_path}",
+        shell=True,
+        stdout=subprocess.PIPE,
+        check=False,
+    )
+    dir_test = subprocess.run(
+        f"hdfs dfs -test -d {hdfs_path}",
+        shell=True,
+        stdout=subprocess.PIPE,
+        check=False,
+    )
+    if file_test.returncode == 0:
+        command = "-rm"
+        process = subprocess.Popen(["hadoop", "fs", command, hdfs_path])
         process.communicate()
-    elif dir_test.returncode==0:
-        command='-rmr'
-        process = subprocess.Popen(["hadoop", "fs",command,hdfs_path ])
+    elif dir_test.returncode == 0:
+        command = "-rmr"
+        process = subprocess.Popen(["hadoop", "fs", command, hdfs_path])
         process.communicate()
     else:
         pass
-        #build in some error handling
+        # build in some error handling
 
 
 def validate_columns(df):
@@ -193,82 +200,100 @@ def validate_columns(df):
     Returns: None
     """
     if rec_id not in df.columns:
-        raise Exception('no record ID in data; contact your project leader for guidance')
+        raise Exception(
+            "no record ID in data; contact your project leader for guidance"
+        )
     if not df[rec_id].is_unique:
-        raise Exception('record ids are not unique; contact your project leader for guidance ')
+        raise Exception(
+            "record ids are not unique; contact your project leader for guidance "
+        )
     if clust_id not in df.columns:
-        raise Exception('no cluster id column in data; contact your project leader for guidance')
+        raise Exception(
+            "no cluster id column in data; contact your project leader for guidance"
+        )
 
 
 def validate_input_data(filepath):
     """
     Checks that the size of the file is smaller than 0.5GB and raises an error if not
-    
+
     Parameters: None
     Returns: None
     """
     if os.path.getsize(filepath) > 536871:
-        raise Exception('Filesize error; file is bigger than 0.5GB')
+        raise Exception("Filesize error; file is bigger than 0.5GB")
 
 
 def check_cluster_done(dataframe):
     """
     A function to check if every record in a cluster has a decision against it.
-    
+
     Parameters: dataframe
     Returns: Boolean (True if every record in clustere has a decision against it, False otherwise)
 
     """
-    num_in_cluster=len(dataframe.loc[dataframe['Sequential_Cluster_Id']==session['index']])
+    num_in_cluster = len(
+        dataframe.loc[dataframe["Sequential_Cluster_Id"] == session["index"]]
+    )
 
-    list_decided=[set(ast.literal_eval(i)) for i in dataframe.loc[dataframe['Sequential_Cluster_Id']==session['index']]['Match']]
+    list_decided = [
+        set(ast.literal_eval(i))
+        for i in dataframe.loc[dataframe["Sequential_Cluster_Id"] == session["index"]][
+            "Match"
+        ]
+    ]
 
-    uni_set_decided={x for l in list_decided for x in l}
+    uni_set_decided = {x for item in list_decided for x in item}
 
-    num_decided=len(uni_set_decided)
-    if (num_in_cluster-num_decided)==0:
+    num_decided = len(uni_set_decided)
+    if (num_in_cluster - num_decided) == 0:
         return 1
     else:
         return 0
 
+
 def highlighter_func(highlight_cols, df_display):
     """
     A function to add the highlighter when a string has in place differences as compared to
-    the first row in a given cluster. 
-    
+    the first row in a given cluster.
+
     Parameters: hightlight_cols - columns to which the highlighter applies (list)
                 df_display - dataframe to which highlighter applies (Pandas Dataframe)
     Returns:    None
-                
+
     """
 
-    if not session['highlight_differences']==1:
-        #highligher is not on exit function
+    if not session["highlight_differences"] == 1:
+        # highlighter is not on exit function
         return
-    
+
     for column in highlight_cols:
         for i in df_display.index.values[1:]:
-            #create container to append letters to
-            output=[]
-            data_point=''
-            #identify characters to compare
-            element=df_display.loc[i,column]
+            # create container to append letters to
+            output = []
+            data_point = ""
+            # identify characters to compare
+            element = df_display.loc[i, column]
             for count, letter in enumerate(element):
-                #check if element has something to compare to
-                #make comparison and append <mark> where there is an inplace difference
-                if not count<= len(df_display.loc[df_display.index.values[0],column])-1:
-                    output.append("<mark>"+ letter + "</mark>")
+                # check if element has something to compare to
+                # make comparison and append <mark> where there is an inplace difference
+                if (
+                    not count
+                    <= len(df_display.loc[df_display.index.values[0], column]) - 1
+                ):
+                    output.append("<mark>" + letter + "</mark>")
 
-                elif not letter != df_display.loc[df_display.index.values[0],column][count]:
+                elif (
+                    not letter
+                    != df_display.loc[df_display.index.values[0], column][count]
+                ):
                     output.append(letter)
                 else:
-                    output.append("<mark>"+ letter + "</mark>")
-                #turn output to string
-                data_point = ''.join(output)
-            #markup string and assign to display_df
-            df_display.loc[i,column] = Markup(data_point)
-            
-            
+                    output.append("<mark>" + letter + "</mark>")
+                # turn output to string
+                data_point = "".join(output)
+            # markup string and assign to display_df
+            df_display.loc[i, column] = Markup(data_point)
 
 
 def new_file_actions():
@@ -289,61 +314,68 @@ def new_file_actions():
 
     """
 
-    #actions for if this is the initial launch/path is not a session variable
-    #get the hdfs file paths and file name
-    session['full_path']=str(request.form.get("file_path"))
-    session['filename']=session['full_path'].split('/')[-1]
+    # actions for if this is the initial launch/path is not a session variable
+    # get the hdfs file paths and file name
+    session["full_path"] = str(request.form.get("file_path"))
+    session["filename"] = session["full_path"].split("/")[-1]
 
-    #get the temporary file location from config
-    temp_local_path=f"{config['filespaces']['local_space']+session['filename']}"
-    #get the data from hdfs into local location
-    get_hadoop(session['full_path'],temp_local_path)
+    # get the temporary file location from config
+    temp_local_path = f"{config['filespaces']['local_space'] + session['filename']}"
+    # get the data from hdfs into local location
+    get_hadoop(session["full_path"], temp_local_path)
 
-    #load from local location to a pandas df
-    local_file=pd.read_parquet(temp_local_path)
+    # load from local location to a pandas df
+    local_file = pd.read_parquet(temp_local_path)
 
-    #validate pd columns/raise errors
+    # validate pd columns/raise errors
     validate_columns(local_file)
 
-    #if temp path is now a directory; remove directory
+    # if temp path is now a directory; remove directory
     if os.path.isdir(temp_local_path):
         shutil.rmtree(temp_local_path)
-        #this is a hack to resolve; to_parquet only works with single partition files.
-    #save back to temp path as a one-partition parquet
+        # this is a hack to resolve; to_parquet only works with single partition files.
+    # save back to temp path as a one-partition parquet
     local_file.to_parquet(temp_local_path)
 
-    #create json version of the local file (a flask hack)
-    session['working_file']=local_file.to_json()
+    # create json version of the local file (a flask hack)
+    session["working_file"] = local_file.to_json()
 
-    #if there are not already; create the following columns: Match,
-    #Comment, Sequential_Cluster_Id, Sequential_Record_Id
+    # if there are not already; create the following columns: Match,
+    # Comment, Sequential_Cluster_Id, Sequential_Record_Id
 
-    if 'Match' not in local_file.columns:
-        local_file['Match']='[]'
+    if "Match" not in local_file.columns:
+        local_file["Match"] = "[]"
 
-    if 'Sequential_Cluster_Id' not in local_file.columns:
-        local_file['Sequential_Cluster_Id'] = pd.factorize(local_file[clust_id])[0]
-        local_file=local_file.sort_values(by=['Sequential_Cluster_Id'])
+    if "Sequential_Cluster_Id" not in local_file.columns:
+        local_file["Sequential_Cluster_Id"] = pd.factorize(local_file[clust_id])[0]
+        local_file = local_file.sort_values(by=["Sequential_Cluster_Id"])
 
-    if 'Comment' not in local_file.columns:
-        local_file['Comment']=''
+    if "Comment" not in local_file.columns:
+        local_file["Comment"] = ""
 
-    if 'Sequential_Record_Id' not in local_file.columns:
-        local_file['Sequential_Record_Id'] = pd.factorize(local_file[rec_id])[0]
-        local_file=local_file.sort_values(by=['Sequential_Record_Id'])
+    if "Sequential_Record_Id" not in local_file.columns:
+        local_file["Sequential_Record_Id"] = pd.factorize(local_file[rec_id])[0]
+        local_file = local_file.sort_values(by=["Sequential_Record_Id"])
 
-
-
-    #get the local filepath in_prog and done paths rename locally to in_prog_path
-    local_in_prog_path, local_filepath_done=get_save_paths(temp_local_path,temp_local_path\
-                                                              .split('/'))
+    # get the local filepath in_prog and done paths rename locally to in_prog_path
+    local_in_prog_path, local_filepath_done = get_save_paths(
+        temp_local_path, temp_local_path.split("/")
+    )
     os.rename(temp_local_path, local_in_prog_path)
 
-    #get the hdfs filepath in_prog and done paths and rename in hdfs to in_prog_path
-    hdfs_in_prog_path, hdfs_filepath_done=get_save_paths(session['full_path'],\
-                                                            session['full_path'].split('/'))
-    #return filepaths
-    return local_file, local_in_prog_path, local_filepath_done, hdfs_in_prog_path, hdfs_filepath_done
+    # get the hdfs filepath in_prog and done paths and rename in hdfs to in_prog_path
+    hdfs_in_prog_path, hdfs_filepath_done = get_save_paths(
+        session["full_path"], session["full_path"].split("/")
+    )
+    # return filepaths
+    return (
+        local_file,
+        local_in_prog_path,
+        local_filepath_done,
+        hdfs_in_prog_path,
+        hdfs_filepath_done,
+    )
+
 
 def reload_page():
     """
@@ -361,20 +393,30 @@ def reload_page():
              hdfs_filepath_done(string) - the hdfs filepath done files are saved to (String)
 
     """
-    #load in pd dataframe
-    local_file=pd.read_json(session['working_file']).sort_values(by=['Sequential_Record_Id'])
+    # load in pd dataframe
+    local_file = pd.read_json(session["working_file"]).sort_values(
+        by=["Sequential_Record_Id"]
+    )
 
-    temp_local_path=f"{config['filespaces']['local_space']+session['filename']}"
+    temp_local_path = f"{config['filespaces']['local_space'] + session['filename']}"
 
-    #get the local filepath in_prog and done paths rename locally to in_prog_path
-    local_in_prog_path, local_filepath_done=get_save_paths(temp_local_path,\
-                                                              temp_local_path.split('/'))
+    # get the local filepath in_prog and done paths rename locally to in_prog_path
+    local_in_prog_path, local_filepath_done = get_save_paths(
+        temp_local_path, temp_local_path.split("/")
+    )
 
-    #get the hdfs filepath in_prog and done paths and rename in hdfs to in_prog_path
-    hdfs_in_prog_path, hdfs_filepath_done=get_save_paths(session['full_path'],\
-                                                            session['full_path'].split('/'))
-    #return filepaths
-    return local_file,local_in_prog_path, local_filepath_done, hdfs_in_prog_path, hdfs_filepath_done
+    # get the hdfs filepath in_prog and done paths and rename in hdfs to in_prog_path
+    hdfs_in_prog_path, hdfs_filepath_done = get_save_paths(
+        session["full_path"], session["full_path"].split("/")
+    )
+    # return filepaths
+    return (
+        local_file,
+        local_in_prog_path,
+        local_filepath_done,
+        hdfs_in_prog_path,
+        hdfs_filepath_done,
+    )
 
 
 def set_session_variables(local_file):
@@ -388,18 +430,23 @@ def set_session_variables(local_file):
 
     Returns: None
     """
-    if 'index' not in session:
-        session['index']=int(local_file['Sequential_Cluster_Id'][(local_file.Match.values == '[]').argmax()])
+    if "index" not in session:
+        session["index"] = int(
+            local_file["Sequential_Cluster_Id"][
+                (local_file.Match.values == "[]").argmax()
+            ]
+        )
 
-    #set select all toggle
+    # set select all toggle
     if "select_all" not in session:
-        session['select_all']=0
+        session["select_all"] = 0
 
-    #highlight differences toggle
-    if 'highlight_differences' not in session:
-        session['highlight_differences']=0
+    # highlight differences toggle
+    if "highlight_differences" not in session:
+        session["highlight_differences"] = 0
 
-def make_match(local_file,match_error):
+
+def make_match(local_file, match_error):
     """
     A function to declare a a group of records as a match. This gets selected records,
     from checkboxes, and appends, 'No match for record ID' to the match column.
@@ -410,27 +457,26 @@ def make_match(local_file,match_error):
     Returns:    match_error - error text to display on screen (String)
 
     """
-    #get record(s) selected by checkboxes
+    # get record(s) selected by checkboxes
     cluster = request.form.getlist("cluster")
     for i in cluster:
+        # if only 1 selected, display on-screen message
+        if len(cluster) <= 1:
+            match_error = "you have only selected one record"
 
-        #if only 1 selected, display on-screen messgae
-        if len(cluster)<=1:
-            match_error='you have only selected one record'
+        # if more than 1 selected; perform match and append comment
+        elif len(cluster) >= 2:
+            local_file.loc[local_file[rec_id] == i, "Match"] = str(cluster)
+            local_file.loc[local_file[rec_id] == i, "Comment"] = str(
+                request.form.get("Comment")
+            )
+            match_error = ""
 
-        #if more than 1 selected; perform match and append comment
-        elif len(cluster)>=2:
-            local_file.loc[local_file[rec_id]==i,'Match']=str(cluster)
-            local_file.loc[local_file[rec_id]==i,'Comment']=str(request.form.get("Comment"))
-            match_error=''
-
-        #move on to next cluster if not at end of file
-    if local_file.Sequential_Cluster_Id.nunique()>int(session['index'])+1:
+        # move on to next cluster if not at end of file
+    if local_file.Sequential_Cluster_Id.nunique() > int(session["index"]) + 1:
         advance_cluster(local_file)
-        
+
     return match_error
-
-
 
 
 def make_non_match(local_file):
@@ -442,19 +488,21 @@ def make_non_match(local_file):
 
     Returns: None
     """
-    #get records selected
+    # get records selected
     cluster = request.form.getlist("cluster")
 
-    #add result to match column
+    # add result to match column
     for i in cluster:
-        local_file.loc[local_file[rec_id]==i,'Match']=f"['No Match In Cluster For {i}']"
-        local_file.loc[local_file[rec_id]==i,'Comment']=str(request.form.get("Comment"))
+        local_file.loc[local_file[rec_id] == i, "Match"] = (
+            f"['No Match In Cluster For {i}']"
+        )
+        local_file.loc[local_file[rec_id] == i, "Comment"] = str(
+            request.form.get("Comment")
+        )
 
-    #move on to next cluster if at the end of a file
-    if local_file.Sequential_Cluster_Id.nunique()>int(session['index'])+1:
+    # move on to next cluster if at the end of a file
+    if local_file.Sequential_Cluster_Id.nunique() > int(session["index"]) + 1:
         advance_cluster(local_file)
-
-
 
 
 def clear_cluster(local_file):
@@ -465,13 +513,17 @@ def clear_cluster(local_file):
     Returns: None
     """
 
-    #get lisy of ids's in cluster
-    cluster_ids=list(local_file.loc[local_file['Sequential_Cluster_Id']==session['index']][rec_id].values)
+    # get lisy of ids's in cluster
+    cluster_ids = list(
+        local_file.loc[local_file["Sequential_Cluster_Id"] == session["index"]][
+            rec_id
+        ].values
+    )
 
-    #reset Match and Comment columns to their respective default.
+    # reset Match and Comment columns to their respective default.
     for i in cluster_ids:
-        local_file.loc[local_file[rec_id]==i,'Match']='[]'
-        local_file.loc[local_file[rec_id]==i,'Comment']=''
+        local_file.loc[local_file[rec_id] == i, "Match"] = "[]"
+        local_file.loc[local_file[rec_id] == i, "Comment"] = ""
 
 
 def set_continuation_message(local_file, cur_cluster_done):
@@ -483,12 +535,15 @@ def set_continuation_message(local_file, cur_cluster_done):
                 cur_cluster_done - Boolean for if all records in a cluster are done (Boolean)
     Returns:    done_message - message displayed on screen (String)
     """
-    not_last_record=local_file.Sequential_Cluster_Id.nunique()>int(session['index'])+1
-    if (not_last_record) or (cur_cluster_done==0):
-        done_message='Keep Matching'
-    elif (not not_last_record) and (cur_cluster_done==1):
-        done_message='Matching Finished- Press save and close the application'
+    not_last_record = (
+        local_file.Sequential_Cluster_Id.nunique() > int(session["index"]) + 1
+    )
+    if (not_last_record) or (cur_cluster_done == 0):
+        done_message = "Keep Matching"
+    elif (not not_last_record) and (cur_cluster_done == 1):
+        done_message = "Matching Finished- Press save and close the application"
     return done_message
+
 
 def reset_toggles():
     """
@@ -497,18 +552,19 @@ def reset_toggles():
     Parameters: None
     Returns: None
     """
-    if request.form.get('selectall')=="selectall":
-        if session['select_all']==1:
-            session['select_all']=0
-        elif session['select_all']==0:
-            session['select_all']=1
+    if request.form.get("selectall") == "selectall":
+        if session["select_all"] == 1:
+            session["select_all"] = 0
+        elif session["select_all"] == 0:
+            session["select_all"] = 1
 
-    #set highlight differences toggle
-    if request.form.get('highlight_differences') == 'highlight_differences':
-        if session['highlight_differences']==1:
-            session['highlight_differences']=0
-        elif session['highlight_differences']==0:
-            session['highlight_differences']=1
+    # set highlight differences toggle
+    if request.form.get("highlight_differences") == "highlight_differences":
+        if session["highlight_differences"] == 1:
+            session["highlight_differences"] = 0
+        elif session["highlight_differences"] == 0:
+            session["highlight_differences"] = 1
+
 
 def set_position_vars(columns):
     """
@@ -519,12 +575,20 @@ def set_position_vars(columns):
     Returns: button_left (Int), button_right (Int)
 
     """
-    column_width = len(columns)+1
-    button_left = int(column_width/2)
-    button_right = button_left + 2*(column_width / 2 - int(column_width / 2))
+    column_width = len(columns) + 1
+    button_left = int(column_width / 2)
+    button_right = button_left + 2 * (column_width / 2 - int(column_width / 2))
     return button_left, button_right
 
-def backup_save(save_thread, local_in_prog_path,hdfs_in_prog_path,local_file, local_filepath_done,hdfs_filepath_done):
+
+def backup_save(
+    save_thread,
+    local_in_prog_path,
+    hdfs_in_prog_path,
+    local_file,
+    local_filepath_done,
+    hdfs_filepath_done,
+):
     """
     A function to save progress, at a given backup point.
 
@@ -532,14 +596,21 @@ def backup_save(save_thread, local_in_prog_path,hdfs_in_prog_path,local_file, lo
     Returns: None
 
     """
-    if session['index'] % int(config['custom_setting']['backup_save'])==0:
-
-        #set s_thread
-        s_thread=Process(target=save_thread, args= (local_in_prog_path,hdfs_in_prog_path,\
-                                            local_file, local_filepath_done,\
-                                            hdfs_filepath_done))
-        #intiate save process
+    if session["index"] % int(config["custom_setting"]["backup_save"]) == 0:
+        # set s_thread
+        s_thread = Process(
+            target=save_thread,
+            args=(
+                local_in_prog_path,
+                hdfs_in_prog_path,
+                local_file,
+                local_filepath_done,
+                hdfs_filepath_done,
+            ),
+        )
+        # initiate save process
         s_thread.start()
+
 
 def clear_session():
     """
@@ -548,7 +619,7 @@ def clear_session():
     Parameters: None
     Returns: None
     """
-    session_keys=list(session)
+    session_keys = list(session)
     for i in session_keys:
-        if i!= 'font_choice':
+        if i != "font_choice":
             session.pop(i)

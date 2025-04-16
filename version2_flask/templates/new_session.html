@@ -7,26 +7,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CROW clerical tool</title>
   </head>
-  <body> 
+  <body>
     <main>
       <div class = 'top'>
         <div class = 'top-image'>
           <img src="{{url_for('static', filename='logo2.PNG')}}"align='right'width=240 height=100>
-        </div>     
-      </div>      
+        </div>
+      </div>
       <div class = 'container'>
         <div class = 'middle'>
-          <form method = "post", class = 'centered'> 
+          <form method = "post", class = 'centered'>
 <!--
-            <h2 style = {{font_choice}}>Please upload the relevant files:</h2> 
+            <h2 style = {{font_choice}}>Please upload the relevant files:</h2>
                     <div class="input_file">
                       <input type="file" id="input_file" class="input_file" name= "input_file" value='True' />
                       <label style = {{font_choice}} for="input_file" >Choose File</label>
-                    </div> 
+                    </div>
                     <h3 style = {{font_choice}} > or </h3>
 -->
-                  <h2 style = {{font_choice}}>Please choose a file to load:</h2>  
-                      <select method = "post", name = "file_path" , id="file_path">  
+                  <h2 style = {{font_choice}}>Please choose a file to load:</h2>
+                      <select method = "post", name = "file_path" , id="file_path">
                       Please select a session... <option value = "default" SELECTED >Please select a session...</option>
                       {% for i in std_out %}
                       {{i}} <option value = "{{i}}" >{{i}}</option>
@@ -39,8 +39,8 @@
                       <input type="submit" id="cluster" name="version" value="Cluster Version" formaction = '/cluster_version'>
                       <label style = {{font_choice}} for="cluster" >Continue</label>
                   </div>
-         </form>         
-        </div>     
+         </form>
+        </div>
       </div>
       <div class = 'bottom'>
         <div class = 'bottom-image'>
@@ -48,5 +48,5 @@
         </div>
       </div>
     </main>
-  </body>            
+  </body>
 </html>

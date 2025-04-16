@@ -1,5 +1,5 @@
 dlh_utils
-markupsafe  
-flask 
-numpy 
+flask
 flask_session
+markupsafe
+numpy
