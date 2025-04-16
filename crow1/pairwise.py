@@ -948,7 +948,7 @@ if __name__ == "__main__":
 
     # Import the configs for the project
     config = configparser.ConfigParser()
-    config.read("Config_pairwise.ini")
+    config.read("pairwise_config.ini")
 
     # Get the initial directory folder
     initdir = config["matching_files_details"]["file_pathway"]
