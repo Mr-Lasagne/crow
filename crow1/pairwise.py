@@ -11,6 +11,8 @@ common area so the rest of your clerical reviewers can access it. DO NOT
 forget to save this file as read-only.
 """
 
+from __future__ import annotations
+
 import configparser
 import getpass
 import os
@@ -20,23 +22,22 @@ from tkinter import filedialog, messagebox, ttk
 import pandas as pd
 
 
-class IntroWindow:
+class IntroWindow(tk.Tk):
     """The window that prompts the user to choose a CSV file."""
 
-    def __init__(self, root, init_dir, files_info):
+    def __init__(self, init_dir: str) -> None:
         """Initialise the IntroWindow class."""
         # Set the window size and title.
-        root.geometry("400x225")
-        root.title("Clerical Matching")
+        super().__init__()
+        self.geometry("400x225")
+        self.title("Clerical Matching")
 
-        # Initialise the directory that the file dialog opens from, as
-        # well as the file types shown.
+        # Initialise the directory that the file dialog opens from.
         self.init_dir = init_dir
-        self.files_info = files_info
 
         # Create the frame to hold the introductory message and the file
         # choice button.
-        self.content = ttk.Frame(root)
+        self.content = ttk.Frame(master=self)
         self.frame = ttk.Frame(
             self.content, borderwidth=5, relief="ridge", width=500, height=300
         )
@@ -57,41 +58,48 @@ class IntroWindow:
         )
         self.choose_file_button.grid(row=2, column=1, columnspan=1, sticky="new")
 
-    def open_dirfinder(self):
+    def open_dirfinder(self) -> None:
         """Open a file dialog window and close the intro window."""
         # Open up a window that allows the user to choose a matching
         # file.
         self.fileselect = filedialog.askopenfilename(
             initialdir=self.init_dir,
             title="Please select a file:",
-            filetypes=self.files_info,
+            filetypes=[("CSV files", "*.csv")],
         )
 
         # Close down IntroWindow.
-        root.destroy()
+        self.destroy()
 
 
-class ClericalApp:
+class ClericalApp(tk.Tk):
     """The main application class."""
 
-    def __init__(self, root, working_file, filename_done, filename_old, config):
+    def __init__(
+        self,
+        working_file: pd.DataFrame,
+        filename_done: str,
+        filename_old: str,
+        config: configparser.ConfigParser,
+    ) -> None:
         """Initialise the ClericalApp class."""
         # Create a title.
-        root.title("Clerical Matching")
+        super().__init__()
+        self.title("Clerical Matching")
 
         # Create the separate frames:
         # 1. Tool frame.
-        self.toolFrame = ttk.LabelFrame(root, text="Tools:")
+        self.toolFrame = ttk.LabelFrame(self, text="Tools:")
         self.toolFrame.grid(
             row=0, column=0, columnspan=1, sticky="ew", padx=10, pady=10
         )
 
         # 2. Record frame.
-        self.record_frame = ttk.LabelFrame(root, text="Current Record")
+        self.record_frame = ttk.LabelFrame(self, text="Current Record")
         self.record_frame.grid(row=2, column=0, columnspan=1, padx=10, pady=3)
 
         # 3. Button frame.
-        self.button_frame = ttk.LabelFrame(root)
+        self.button_frame = ttk.LabelFrame(self)
         self.button_frame.grid(row=3, column=0, columnspan=1, padx=10, pady=3)
 
         # Initialise the file name variables.
@@ -100,7 +108,7 @@ class ClericalApp:
         self.filename_old = filename_old
 
         # Create protocol for if user presses the 'X' (top right).
-        root.protocol("WM_DELETE_WINDOW", self.on_exit)
+        self.protocol("WM_DELETE_WINDOW", self.on_exit)
 
         # Create a match column if one doesn't exist. Replace any
         # missing values (NA) with blank spaces.
@@ -192,7 +200,7 @@ class ClericalApp:
         self.draw_record_frame()
         self.draw_tool_frame()
 
-    def draw_record_frame(self):
+    def draw_record_frame(self) -> None:
         """Draw the record frame."""
         row_adder = 0
         separator_adder = 2
@@ -374,7 +382,7 @@ class ClericalApp:
 
         # Record frame.
 
-    def draw_button_frame(self):
+    def draw_button_frame(self) -> None:
         """Draw the button_frame."""
         # Match/Non-Match buttons.
         self.match_button = tk.Button(
@@ -429,7 +437,7 @@ class ClericalApp:
 
         # Tool frame.
 
-    def draw_tool_frame(self):
+    def draw_tool_frame(self) -> None:
         """Draw the tool_frame."""
         # Create labels for tools bar.
         self.separator_tf_1 = ttk.Separator(self.toolFrame, orient="vertical")
@@ -501,7 +509,7 @@ class ClericalApp:
         )
         self.save_button.grid(row=0, column=8, columnspan=1, sticky="e", padx=5, pady=5)
 
-    def show_hide_differences(self):
+    def show_hide_differences(self) -> None:
         """Toggle show hide differences."""
         if not self.show_hide_diff:
             # Make show show diff variable 1 so that next time this
@@ -624,7 +632,7 @@ class ClericalApp:
                 for vals in self.difference_col_label_names[key]:
                     exec(f"self.{key}.tag_remove('{vals}','1.0','end')")
 
-    def make_text_bold(self):
+    def make_text_bold(self) -> None:
         """Toggle text boldness."""
         if not self.text_bold_boolean:
             self.text_bold_boolean = 1
@@ -636,7 +644,7 @@ class ClericalApp:
 
         self.update_gui()
 
-    def get_starting_index(self):
+    def get_starting_index(self) -> int | None:
         """Get the first record without a match decision.
 
         Returns
@@ -669,7 +677,7 @@ class ClericalApp:
                 elif working_file.iloc[i, -1] == 1 or working_file.iloc[i, -1] == 0:
                     pass
 
-    def update_gui(self):
+    def update_gui(self) -> None:
         """Update the GUI labels based on the records."""
         if self.check_matching_done() == 0:
             # Configure the non-iterable labels.
@@ -707,7 +715,7 @@ class ClericalApp:
                 "Matching Finished Press save and close or use the back button to return to the previous record",
             )
 
-    def update_df(self, match_res):
+    def update_df(self, match_res: int) -> None:
         """Update the DataFrame with the matching outcome.
 
         1 == Match, 0 == Non-match.
@@ -723,7 +731,7 @@ class ClericalApp:
         if int(config["custom_settings"]["commentbox"]):
             working_file.at[self.record_index, "Comments"] = self.comment_entry.get()
 
-    def save_at_checkpoint(self):
+    def save_at_checkpoint(self) -> None:
         """Backup the data at a given interval.
 
         The interval is defined in the configuration file.
@@ -752,7 +760,7 @@ class ClericalApp:
         elif self.record_index % self.records_per_checkpoint != 0:
             pass
 
-    def check_matching_done(self):
+    def check_matching_done(self) -> int:
         """Check if the review is complete.
 
         Checks if the number of iterations is greater than the number of
@@ -760,7 +768,7 @@ class ClericalApp:
 
         Returns
         -------
-        bool
+        int
             Dictates whether to stop displaying any more records and
             close the app or continue updating the app. 1 = Stop The
             GUI, 0 = Continue updating the GUI.
@@ -774,7 +782,7 @@ class ClericalApp:
             # Present a message on the screen informing the user that
             # matching is finished.
             self.matchdone = ttk.Label(
-                root, text="Matching Finished. Press save and close.", foreground="red"
+                self, text="Matching Finished. Press save and close.", foreground="red"
             )
             self.matchdone.grid(row=1, column=0, columnspan=1)
 
@@ -782,7 +790,7 @@ class ClericalApp:
         else:
             return 0
 
-    def save_and_close(self):
+    def save_and_close(self) -> None:
         """Save the DataFrame and close the window."""
         # Check whether matching has now finished (i.e. they have
         # completed all records).
@@ -799,9 +807,9 @@ class ClericalApp:
             working_file.to_csv(self.filename_old, index=False)
 
         # Close down the app.
-        root.destroy()
+        self.destroy()
 
-    def update_index(self, event):
+    def update_index(self, event: int) -> None:
         """Update the index that cycles through the records.
 
         Updates the overall index variable which cycles through the
@@ -834,7 +842,7 @@ class ClericalApp:
             # Update the GUI labels.
             self.update_gui()
 
-    def go_back(self):
+    def go_back(self) -> None:
         """Go back to the previous record pair."""
         # If they have reached the end of matching.
         if self.record_index == len(working_file):
@@ -859,7 +867,7 @@ class ClericalApp:
         elif self.record_index == 0:
             pass
 
-    def change_text_size(self, size_change):
+    def change_text_size(self, size_change: int) -> None:
         """Increase or decrease the size of the text.
 
         It also changes the size of the window to fit the text.
@@ -881,7 +889,7 @@ class ClericalApp:
         # Clear record frame.
         self.update_gui()
 
-    def on_exit(self):
+    def on_exit(self) -> None:
         """Ask the user if they want to exit without saving."""
         # If they click yes.
         if messagebox.askyesno("Exit", "Are you sure you want to exit WITHOUT saving?"):
@@ -895,7 +903,7 @@ class ClericalApp:
                 )
 
             # Close down the application.
-            root.destroy()
+            self.destroy()
 
 
 if __name__ == "__main__":
@@ -906,55 +914,48 @@ if __name__ == "__main__":
     # Get the initial directory.
     initdir = config["matching_files_details"]["file_pathway"]
 
-    # Specify file types - this will only show these files when the
-    # dialog box opens up.
-    filetypes = (("csv files", "*.csv"),)
-
     # Get the user credentials.
     user = getpass.getuser()
 
-    root = tk.Tk()
-
     # Run the intro window.
-    intro = IntroWindow(root, initdir, filetypes)
-
-    root.mainloop()
+    intro_window = IntroWindow(initdir)
+    intro_window.mainloop()
 
     # Check if the user running it has selected this file before (this
     # means they have done some of the matching already and are coming
     # back to it).
-    if "inProgress" in intro.fileselect.split("/")[-1]:
+    if "inProgress" in intro_window.fileselect.split("/")[-1]:
         # If it is the same user.
-        if user in intro.fileselect.split("/")[-1]:
+        if user in intro_window.fileselect.split("/")[-1]:
             # Do not rename the file.
-            renamed_file = intro.fileselect
+            renamed_file = intro_window.fileselect
 
             # Create the filepath name for when the file is finished.
             filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
 
         else:
             # Rename the file to contain the additional user.
-            renamed_file = f"{'/'.join(intro.fileselect.split('/')[:-1])}/{intro.fileselect.split('/')[-1].split('.')[0][0:-11]}_{user}_inProgress.{intro.fileselect.split('/')[-1].split('.')[-1]}"
-            os.rename(rf"{intro.fileselect}", rf"{renamed_file}")
+            renamed_file = f"{'/'.join(intro_window.fileselect.split('/')[:-1])}/{intro_window.fileselect.split('/')[-1].split('.')[0][0:-11]}_{user}_inProgress.{intro_window.fileselect.split('/')[-1].split('.')[-1]}"
+            os.rename(rf"{intro_window.fileselect}", rf"{renamed_file}")
 
             # Create the filepath name for when the file is finished.
             filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
 
     # If a user is picking this file again and it is done.
-    elif "DONE" in intro.fileselect.split("/")[-1]:
+    elif "DONE" in intro_window.fileselect.split("/")[-1]:
         # If it is the same user.
-        if user in intro.fileselect.split("/")[-1]:
+        if user in intro_window.fileselect.split("/")[-1]:
             # Do not change filepath done - keep it as it is.
-            filepath_done = intro.fileselect
+            filepath_done = intro_window.fileselect
 
             # Rename the file.
-            renamed_file = f"{'/'.join(intro.fileselect.split('/')[:-1])}/{intro.fileselect.split('/')[-1][0:-9]}_inProgress.{intro.fileselect.split('/')[-1].split('.')[-1]}"
-            os.rename(rf"{intro.fileselect}", rf"{renamed_file}")
+            renamed_file = f"{'/'.join(intro_window.fileselect.split('/')[:-1])}/{intro_window.fileselect.split('/')[-1][0:-9]}_inProgress.{intro_window.fileselect.split('/')[-1].split('.')[-1]}"
+            os.rename(rf"{intro_window.fileselect}", rf"{renamed_file}")
         else:
             # If it is a different user: Rename the file to include the
             # additional user.
-            renamed_file = f"{'/'.join(intro.fileselect.split('/')[:-1])}/{intro.fileselect.split('/')[-1].split('.')[0][0:-5]}_{user}_inProgress.{intro.fileselect.split('/')[-1].split('.')[-1]}"
-            os.rename(rf"{intro.fileselect}", rf"{renamed_file}")
+            renamed_file = f"{'/'.join(intro_window.fileselect.split('/')[:-1])}/{intro_window.fileselect.split('/')[-1].split('.')[0][0:-5]}_{user}_inProgress.{intro_window.fileselect.split('/')[-1].split('.')[-1]}"
+            os.rename(rf"{intro_window.fileselect}", rf"{renamed_file}")
 
             # Create the filepath done.
             filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
@@ -963,8 +964,8 @@ if __name__ == "__main__":
         # Resave this file with the user ID at the end so no one else
         # selects it rename it with '_inProgress' and their entered
         # initials.
-        renamed_file = f"{'/'.join(intro.fileselect.split('/')[:-1])}/{intro.fileselect.split('/')[-1].split('.')[0]}_{user}_inProgress.{intro.fileselect.split('/')[-1].split('.')[-1]}"
-        os.rename(rf"{intro.fileselect}", rf"{renamed_file}")
+        renamed_file = f"{'/'.join(intro_window.fileselect.split('/')[:-1])}/{intro_window.fileselect.split('/')[-1].split('.')[0]}_{user}_inProgress.{intro_window.fileselect.split('/')[-1].split('.')[-1]}"
+        os.rename(rf"{intro_window.fileselect}", rf"{renamed_file}")
 
         # Create the filepath name for when the file is finished.
         filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
@@ -973,9 +974,8 @@ if __name__ == "__main__":
     working_file = pd.read_csv(renamed_file)
 
     # Run the clerical matching app.
-    root = tk.Tk()
-    mainWindow = ClericalApp(root, working_file, filepath_done, renamed_file, config)
-    root.mainloop()
+    app = ClericalApp(working_file, filepath_done, renamed_file, config)
+    app.mainloop()
 
     print(
         "\n Number of records matched:",
