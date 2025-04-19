@@ -58,11 +58,11 @@ class IntroWindow(tk.Tk):
 
         # Create the file choice button and pack it into the frame.
         self.choose_file_button = ttk.Button(
-            self.content, text="Choose File", command=lambda: self.open_dirfinder()
+            self.content, text="Choose File", command=lambda: self.open_csv_file()
         )
         self.choose_file_button.grid(row=2, column=1, columnspan=1, sticky="new")
 
-    def open_dirfinder(self) -> None:
+    def open_csv_file(self) -> None:
         """Open a file dialog window and close the intro window."""
         # Open up a window that allows the user to choose a matching
         # file.
