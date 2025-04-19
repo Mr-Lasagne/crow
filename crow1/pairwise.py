@@ -47,7 +47,11 @@ class IntroWindow(tk.Tk):
         # Create the introductory message and pack it into the frame.
         self.intro_text = ttk.Label(
             self.content,
-            text='Welcome to the Clerical Matching Application. \nPlease click "Choose File" to select your file \nand begin matching.',
+            text=(
+                "Welcome to the Clerical Matching Application.\n"
+                'Please click "Choose File" to select your file\n'
+                "and begin matching."
+            ),
             font="Helvetica 10",
         )
         self.intro_text.grid(row=1, column=0, columnspan=4)
