@@ -713,8 +713,11 @@ class ClericalApp(tk.Tk):
                 self.back_button.config(state="normal")
         elif self.check_matching_done() == 1:
             messagebox.showinfo(
-                "Matching Finished",
-                "Matching Finished Press save and close or use the back button to return to the previous record",
+                title="Matching Finished",
+                message=(
+                    'Press "save and close" or use the "back" button to return to the '
+                    "previous record"
+                ),
             )
 
     def update_df(self, match_res: int) -> None:
@@ -894,7 +897,9 @@ class ClericalApp(tk.Tk):
     def on_exit(self) -> None:
         """Ask the user if they want to exit without saving."""
         # If they click yes.
-        if messagebox.askyesno("Exit", "Are you sure you want to exit WITHOUT saving?"):
+        if messagebox.askyesno(
+            title="Exit", message="Are you sure you want to exit WITHOUT saving?"
+        ):
             # Check if this is the first time they are accessing it.
             if not self.matching_previously_began & self.checkpointcounter != 0:
                 # Then rename the file removing their initial and
