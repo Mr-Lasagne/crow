@@ -67,8 +67,7 @@ class IntroWindow(tk.Tk):
         # Open up a window that allows the user to choose a matching
         # file.
         self.csv_path = filedialog.askopenfilename(
-            initialdir=self.init_dir,
-            filetypes=[("CSV files", "*.csv")],
+            initialdir=self.init_dir, filetypes=[("CSV files", "*.csv")]
         )
 
         # Close down IntroWindow.
@@ -138,7 +137,7 @@ class ClericalApp(tk.Tk):
             working_file["Match"] = ""
             # Create the comment box column if column header is
             # specified.
-            if int(config["custom_settings"]["commentbox"]):
+            if int(config["custom_settings"]["comment_box"]):
                 working_file["Comments"] = ""
 
             # Convert all columns apart from Match and Comments (if
@@ -406,7 +405,7 @@ class ClericalApp(tk.Tk):
         self.non_match_button.grid(row=0, column=1, columnspan=1, padx=15, pady=10)
 
         # Add in the comment widget based on config option.
-        if int(config["custom_settings"]["commentbox"]):
+        if int(config["custom_settings"]["comment_box"]):
             # Create comments column if one doesn't exist.
             if "Comments" not in working_file:
                 working_file["Comments"] = ""
@@ -662,7 +661,7 @@ class ClericalApp(tk.Tk):
         # available record.
 
         # Choose which one to cycle through.
-        if int(config["custom_settings"]["commentbox"]):
+        if int(config["custom_settings"]["comment_box"]):
             for i in index_values:
                 if working_file.iloc[i, -2] != 1 and working_file.iloc[i, -2] != 0:
                     return i
@@ -731,7 +730,7 @@ class ClericalApp(tk.Tk):
         # Update df.
         working_file.at[self.record_index, "Match"] = match_res
 
-        if int(config["custom_settings"]["commentbox"]):
+        if int(config["custom_settings"]["comment_box"]):
             working_file.at[self.record_index, "Comments"] = self.comment_entry.get()
 
     def save_at_checkpoint(self) -> None:
@@ -887,7 +886,7 @@ class ClericalApp(tk.Tk):
 
         else:
             self.text_size -= 1
-            # If commentbox specified in config.
+            # If comment_box specified in config.
 
         # Clear record frame.
         self.update_gui()
