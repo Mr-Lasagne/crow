@@ -456,7 +456,7 @@ class ClericalApp(tk.Tk):
             )
             # Enter in the text from the df.
             exec(
-                f'self.{col_header[0]}.insert("1.0",working_file["{col_header[0]}"][self.record_index])'
+                f'self.{col_header[0]}.insert("1.0", working_file["{col_header[0]}"][self.record_index])'
             )
             # Configure Text so that it is a specified width, font and
             # can't be interacted with.
@@ -472,7 +472,7 @@ class ClericalApp(tk.Tk):
 
                     # Position it on the screen.
                     exec(
-                        f'self.{col_header[0]}.grid(row=dataset_row_num[i],column=col_header[2],columnspan=1,padx=10, pady=3,sticky="w")'
+                        f'self.{col_header[0]}.grid(row=dataset_row_num[i], column=col_header[2], columnspan=1, padx=10, pady=3, sticky="w")'
                     )
 
                     # Check whether it is a dataset row to highlight or
@@ -503,11 +503,9 @@ class ClericalApp(tk.Tk):
 
         if not self.show_hide_diff:
             self.show_hide_diff = 1
-
             self.show_hide_differences()
         else:
             self.show_hide_diff = 0
-
             self.show_hide_differences()
 
     def draw_button_frame(self) -> None:
