@@ -23,15 +23,16 @@ import pandas as pd
 class IntroWindow(tk.Tk):
     """The window that prompts the user to choose a CSV file."""
 
-    def __init__(self, init_dir: str) -> None:
+    def __init__(self, initial_directory: str) -> None:
         """Initialise the IntroWindow class."""
         # Set the window size and title.
         super().__init__()
         self.geometry("400x225")
         self.title("CROW1")
 
-        # Initialise the directory that the file dialog opens from.
-        self.init_dir = init_dir
+        # Initialise some variables
+        self.initial_directory = initial_directory
+        self.csv_path = None
 
         # Create the frame to hold the introductory message and the file
         # choice button.
@@ -64,9 +65,11 @@ class IntroWindow(tk.Tk):
         """Open a file dialog window and close the intro window."""
         # Open up a window that allows the user to choose a matching
         # file.
-        self.csv_path = filedialog.askopenfilename(
-            initialdir=self.init_dir, filetypes=[("CSV files", "*.csv")]
+        csv_path = filedialog.askopenfilename(
+            initialdir=self.initial_directory, filetypes=[("CSV files", "*.csv")]
         )
+        if csv_path:
+            self.csv_path = csv_path
 
         # Close down IntroWindow.
         self.destroy()
@@ -173,7 +176,7 @@ class ClericalApp(tk.Tk):
             title="Exit", message="Are you sure you want to exit WITHOUT saving?"
         ):
             # Check if this is the first time they are accessing it.
-            if not self.matching_previously_began & self.checkpoint_counter != 0:
+            if not self.matching_previously_began and self.checkpoint_counter == 0:
                 # Then rename the file removing their initial and
                 # 'inProgress' tag.
                 os.rename(
@@ -939,63 +942,66 @@ if __name__ == "__main__":
     intro_window = IntroWindow(initial_directory)
     intro_window.mainloop()
 
-    # Check if the user running it has selected this file before (this
-    # means they have done some of the matching already and are coming
-    # back to it).
-    if "inProgress" in intro_window.csv_path.split("/")[-1]:
-        # If it is the same user.
-        if user in intro_window.csv_path.split("/")[-1]:
-            # Do not rename the file.
-            renamed_file = intro_window.csv_path
+    if intro_window.csv_path:
+        # Check if the user running it has selected this file before (this
+        # means they have done some of the matching already and are coming
+        # back to it).
+        if "inProgress" in intro_window.csv_path.split("/")[-1]:
+            # If it is the same user.
+            if user in intro_window.csv_path.split("/")[-1]:
+                # Do not rename the file.
+                renamed_file = intro_window.csv_path
+
+                # Create the filepath name for when the file is finished.
+                filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
+
+            else:
+                # Rename the file to contain the additional user.
+                renamed_file = f"{'/'.join(intro_window.csv_path.split('/')[:-1])}/{intro_window.csv_path.split('/')[-1].split('.')[0][0:-11]}_{user}_inProgress.{intro_window.csv_path.split('/')[-1].split('.')[-1]}"
+                os.rename(rf"{intro_window.csv_path}", rf"{renamed_file}")
+
+                # Create the filepath name for when the file is finished.
+                filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
+
+        # If a user is picking this file again and it is done.
+        elif "DONE" in intro_window.csv_path.split("/")[-1]:
+            # If it is the same user.
+            if user in intro_window.csv_path.split("/")[-1]:
+                # Do not change filepath done - keep it as it is.
+                filepath_done = intro_window.csv_path
+
+                # Rename the file.
+                renamed_file = f"{'/'.join(intro_window.csv_path.split('/')[:-1])}/{intro_window.csv_path.split('/')[-1][0:-9]}_inProgress.{intro_window.csv_path.split('/')[-1].split('.')[-1]}"
+                os.rename(rf"{intro_window.csv_path}", rf"{renamed_file}")
+            else:
+                # If it is a different user: Rename the file to include the
+                # additional user.
+                renamed_file = f"{'/'.join(intro_window.csv_path.split('/')[:-1])}/{intro_window.csv_path.split('/')[-1].split('.')[0][0:-5]}_{user}_inProgress.{intro_window.csv_path.split('/')[-1].split('.')[-1]}"
+                os.rename(rf"{intro_window.csv_path}", rf"{renamed_file}")
+
+                # Create the filepath done.
+                filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
+
+        else:
+            # Resave this file with the user ID at the end so no one else
+            # selects it rename it with '_inProgress' and their entered
+            # initials.
+            renamed_file = f"{'/'.join(intro_window.csv_path.split('/')[:-1])}/{intro_window.csv_path.split('/')[-1].split('.')[0]}_{user}_inProgress.{intro_window.csv_path.split('/')[-1].split('.')[-1]}"
+            os.rename(rf"{intro_window.csv_path}", rf"{renamed_file}")
 
             # Create the filepath name for when the file is finished.
             filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
 
-        else:
-            # Rename the file to contain the additional user.
-            renamed_file = f"{'/'.join(intro_window.csv_path.split('/')[:-1])}/{intro_window.csv_path.split('/')[-1].split('.')[0][0:-11]}_{user}_inProgress.{intro_window.csv_path.split('/')[-1].split('.')[-1]}"
-            os.rename(rf"{intro_window.csv_path}", rf"{renamed_file}")
+        # Load in the required csv file as a pandas DataFrame.
+        working_file = pd.read_csv(renamed_file)
 
-            # Create the filepath name for when the file is finished.
-            filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
+        # Run the clerical matching app.
+        app = ClericalApp(working_file, filepath_done, renamed_file, config)
+        app.mainloop()
 
-    # If a user is picking this file again and it is done.
-    elif "DONE" in intro_window.csv_path.split("/")[-1]:
-        # If it is the same user.
-        if user in intro_window.csv_path.split("/")[-1]:
-            # Do not change filepath done - keep it as it is.
-            filepath_done = intro_window.csv_path
-
-            # Rename the file.
-            renamed_file = f"{'/'.join(intro_window.csv_path.split('/')[:-1])}/{intro_window.csv_path.split('/')[-1][0:-9]}_inProgress.{intro_window.csv_path.split('/')[-1].split('.')[-1]}"
-            os.rename(rf"{intro_window.csv_path}", rf"{renamed_file}")
-        else:
-            # If it is a different user: Rename the file to include the
-            # additional user.
-            renamed_file = f"{'/'.join(intro_window.csv_path.split('/')[:-1])}/{intro_window.csv_path.split('/')[-1].split('.')[0][0:-5]}_{user}_inProgress.{intro_window.csv_path.split('/')[-1].split('.')[-1]}"
-            os.rename(rf"{intro_window.csv_path}", rf"{renamed_file}")
-
-            # Create the filepath done.
-            filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
-
+        print(
+            "\n Number of records matched:",
+            str(len(working_file[working_file.Match != ""])),
+        )
     else:
-        # Resave this file with the user ID at the end so no one else
-        # selects it rename it with '_inProgress' and their entered
-        # initials.
-        renamed_file = f"{'/'.join(intro_window.csv_path.split('/')[:-1])}/{intro_window.csv_path.split('/')[-1].split('.')[0]}_{user}_inProgress.{intro_window.csv_path.split('/')[-1].split('.')[-1]}"
-        os.rename(rf"{intro_window.csv_path}", rf"{renamed_file}")
-
-        # Create the filepath name for when the file is finished.
-        filepath_done = f"{'/'.join(renamed_file.split('/')[:-1])}/{renamed_file.split('/')[-1][0:-15]}_DONE.{renamed_file.split('/')[-1].split('.')[-1]}"
-
-    # Load in the required csv file as a pandas DataFrame.
-    working_file = pd.read_csv(renamed_file)
-
-    # Run the clerical matching app.
-    app = ClericalApp(working_file, filepath_done, renamed_file, config)
-    app.mainloop()
-
-    print(
-        "\n Number of records matched:",
-        str(len(working_file[working_file.Match != ""])),
-    )
+        print("No file selected.")
