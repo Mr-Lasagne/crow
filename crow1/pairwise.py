@@ -161,7 +161,7 @@ class ClericalApp(tk.Tk):
         self.num_records = len(working_file)
 
         # A counter of the number of checkpoint saves.
-        self.checkpointcounter = 0
+        self.checkpoint_counter = 0
 
         # Initiate start record_index so that it will go from latest
         # record counter variable for iterating through the CM file.
@@ -750,7 +750,7 @@ class ClericalApp(tk.Tk):
             # Checkpoint it by saving it.
             working_file.to_csv(self.filename_old, index=False)
             # Increase checkpoint counter.
-            self.checkpointcounter += 1
+            self.checkpoint_counter += 1
 
         # Check if record_index is a multiple of 5 & record_index== num
         # records.
@@ -760,7 +760,7 @@ class ClericalApp(tk.Tk):
             # Save it as DONE.
             os.rename(self.filename_old, self.filename_done)
             working_file.to_csv(self.filename_done, index=False)
-            self.checkpointcounter += 1
+            self.checkpoint_counter += 1
 
         elif self.record_index % self.records_per_checkpoint != 0:
             pass
@@ -901,7 +901,7 @@ class ClericalApp(tk.Tk):
             title="Exit", message="Are you sure you want to exit WITHOUT saving?"
         ):
             # Check if this is the first time they are accessing it.
-            if not self.matching_previously_began & self.checkpointcounter != 0:
+            if not self.matching_previously_began & self.checkpoint_counter != 0:
                 # Then rename the file removing their initial and
                 # 'inProgress' tag.
                 os.rename(
