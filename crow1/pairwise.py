@@ -27,39 +27,34 @@ class IntroWindow(tk.Tk):
         """Initialise the IntroWindow class."""
         # Set the window size and title.
         super().__init__()
-        self.geometry("400x225")
         self.title("CROW1")
+        self.resizable(width=False, height=False)
 
-        # Initialise some variables
+        # Initialise some variables.
         self.initial_directory = initial_directory
         self.csv_path = None
 
         # Create the frame to hold the introductory message and the file
         # choice button.
-        self.content = ttk.Frame(master=self)
-        self.frame = ttk.Frame(
-            self.content, borderwidth=5, relief="ridge", width=500, height=300
-        )
-        self.content.grid(column=0, row=0)
-        self.frame.grid(column=0, row=0, columnspan=5, rowspan=5)
+        self.intro_frame = ttk.Frame(self)
+        self.intro_frame.pack(expand=True, fill="both")
 
         # Create the introductory message and pack it into the frame.
         self.intro_text = ttk.Label(
-            self.content,
+            self.intro_frame,
             text=(
-                "Welcome to the Clerical Matching Application.\n"
-                'Please click "Choose File" to select your file\n'
-                "and begin matching."
+                "Welcome to the clerical matching application.\n"
+                'Please click "open CSV file" below to select a\n'
+                "CSV file and begin clerically reviewing."
             ),
-            font="Helvetica 10",
         )
-        self.intro_text.grid(row=1, column=0, columnspan=4)
+        self.intro_text.pack(padx=20, pady=20)
 
         # Create the file choice button and pack it into the frame.
-        self.choose_file_button = ttk.Button(
-            self.content, text="Choose File", command=lambda: self.open_csv_file()
+        self.open_csv_button = ttk.Button(
+            self.intro_frame, text="open CSV file", command=self.open_csv_file
         )
-        self.choose_file_button.grid(row=2, column=1, columnspan=1, sticky="new")
+        self.open_csv_button.pack(pady=(0, 20), ipadx=15)
 
     def open_csv_file(self) -> None:
         """Open a file dialog window and close the intro window."""
@@ -103,18 +98,16 @@ class ClericalApp(tk.Tk):
         self.title("CROW1")
 
         # Set up frames.
-        self.tool_frame = ttk.Labelframe(master=self, text="Tools")
-        self.tool_frame.grid(
-            row=0, column=0, columnspan=1, sticky="ew", padx=10, pady=10
-        )
+        self.tool_frame = ttk.Labelframe(self, text="Tools")
+        self.tool_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
 
-        self.record_frame = ttk.Labelframe(master=self, text="Current Record Pair")
-        self.record_frame.grid(row=2, column=0, columnspan=1, padx=10, pady=3)
+        self.record_frame = ttk.Labelframe(self, text="Current Record Pair")
+        self.record_frame.grid(row=2, column=0, padx=10, pady=3)
 
-        self.button_frame = ttk.Labelframe(master=self)
-        self.button_frame.grid(row=3, column=0, columnspan=1, padx=10, pady=3)
+        self.button_frame = ttk.Frame(self)
+        self.button_frame.grid(row=3, column=0, padx=10, pady=3)
 
-        # Initialise file names.
+        # Initialise variables.
         self.filename_done = filename_done
         self.filename_old = filename_old
         self.working_file = working_file
@@ -284,7 +277,7 @@ class ClericalApp(tk.Tk):
             self.button_frame,
             text=f"Back {back_symbol}",
             font=f"Helvetica {self.text_size}",
-            command=lambda: self.go_back(),
+            command=self.go_back,
         )
         self.back_button.grid(row=0, column=2, columnspan=1, padx=15, pady=10)
         # Show hide differences.
@@ -292,13 +285,13 @@ class ClericalApp(tk.Tk):
             self.tool_frame,
             text="Show/Hide Differences",
             font=f"Helvetica {self.text_size}",
-            command=lambda: self.show_hide_differences(),
+            command=self.show_hide_differences,
         )
         self.show_hide_diff_button.grid(row=0, column=2, columnspan=1, padx=5, pady=5)
+
         # Change text size buttons.
         increase_text_size_symbol = "\U0001f5da"
         decrease_text_size_symbol = "\U0001f5db"
-
         self.text_smaller_button = tk.Button(
             self.tool_frame,
             text=f"{decrease_text_size_symbol}-",
@@ -325,7 +318,7 @@ class ClericalApp(tk.Tk):
             font=f"Helvetica {self.text_size + 3}",
             height=1,
             width=3,
-            command=lambda: self.make_text_bold(),
+            command=self.make_text_bold,
         )
         self.bold_button.grid(row=0, column=6, sticky="w", pady=5)
         # Save and close button.
@@ -334,7 +327,7 @@ class ClericalApp(tk.Tk):
             self.tool_frame,
             text=f"Save and Close {save_symbol}",
             font=f"Helvetica {self.text_size}",
-            command=lambda: self.save_and_close(),
+            command=self.save_and_close,
         )
         self.save_button.grid(row=0, column=8, columnspan=1, sticky="e", padx=5, pady=5)
 
@@ -516,10 +509,6 @@ class ClericalApp(tk.Tk):
             self.show_hide_diff = 0
 
             self.show_hide_differences()
-
-        # Sort out the buttons by frame.
-
-        # Record frame.
 
     def draw_button_frame(self) -> None:
         """Draw the button_frame."""
@@ -882,7 +871,7 @@ class ClericalApp(tk.Tk):
     def go_back(self) -> None:
         """Go back to the previous record pair."""
         # If they have reached the end of matching.
-        if self.record_index == len(working_file):
+        if self.record_index == self.num_records:
             # Take away the Matching is finished message.
             self.match_done.grid_forget()
             # Reactivate the buttons.
@@ -893,7 +882,7 @@ class ClericalApp(tk.Tk):
             # Update the overall GUI.
             self.update_gui()
             # Rename the file back to in progress.
-            if len(working_file) % self.records_per_checkpoint == 0:
+            if self.num_records % self.records_per_checkpoint == 0:
                 os.rename(self.filename_done, self.filename_old)
         # If they are part way through matching.
         elif self.record_index > 0:
