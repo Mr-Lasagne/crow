@@ -28,7 +28,7 @@ class IntroWindow(tk.Tk):
         # Set the window size and title.
         super().__init__()
         self.geometry("400x225")
-        self.title("Clerical Matching")
+        self.title("CROW1")
 
         # Initialise the directory that the file dialog opens from.
         self.init_dir = init_dir
@@ -82,31 +82,41 @@ class ClericalApp(tk.Tk):
         filename_old: str,
         config: configparser.ConfigParser,
     ) -> None:
-        """Initialise the ClericalApp class."""
-        # Create a title.
-        super().__init__()
-        self.title("Clerical Matching")
+        """Initialise the ClericalApp main window.
 
-        # Create the separate frames:
-        # 1. Tool frame.
-        self.tool_frame = ttk.LabelFrame(self, text="Tools")
+        Parameters
+        ----------
+        working_file : pd.DataFrame
+            The DataFrame containing record-pair rows and (optionally) a
+            "Match" column.
+        filename_done : str
+            The path to the completed output file.
+        filename_old : str
+            The path to the original input file.
+        config : configparser.ConfigParser
+            The configuration file.
+        """
+        super().__init__()
+        self.title("CROW1")
+
+        # Set up frames.
+        self.tool_frame = ttk.Labelframe(master=self, text="Tools")
         self.tool_frame.grid(
             row=0, column=0, columnspan=1, sticky="ew", padx=10, pady=10
         )
 
-        # 2. Record frame.
-        self.record_frame = ttk.LabelFrame(self, text="Current Record")
+        self.record_frame = ttk.Labelframe(master=self, text="Current Record Pair")
         self.record_frame.grid(row=2, column=0, columnspan=1, padx=10, pady=3)
 
-        # 3. Button frame.
-        self.button_frame = ttk.LabelFrame(self)
+        self.button_frame = ttk.Labelframe(master=self)
         self.button_frame.grid(row=3, column=0, columnspan=1, padx=10, pady=3)
 
-        # Initialise the file name variables.
+        # Initialise file names.
         self.filename_done = filename_done
         self.filename_old = filename_old
 
-        # Create protocol for if user presses the 'X' (top right).
+        # Create an exit protocol for if user presses the 'X' (top-right
+        # corner of the window).
         self.protocol("WM_DELETE_WINDOW", self.on_exit)
 
         # Create a match column if one doesn't exist. Replace any
@@ -154,14 +164,14 @@ class ClericalApp(tk.Tk):
 
             self.matching_previously_began = 0
 
-        # Count how many records are in the CM file.
+        # Count how many records are in the CSV file.
         self.num_records = len(working_file)
 
         # A counter of the number of checkpoint saves.
         self.checkpoint_counter = 0
 
-        # Initiate start record_index so that it will go from latest
-        # record counter variable for iterating through the CM file.
+        # Initiate the starting index so that it will go from latest
+        # record counter variable for iterating through the CSV file.
         self.record_index = self.get_starting_index()
 
         self.records_per_checkpoint = int(
@@ -177,7 +187,7 @@ class ClericalApp(tk.Tk):
         self.show_hide_diff = 0
         self.difference_col_label_names = {}
 
-        # Create the record_index matches.
+        # Create the record counter label.
         self.counter_matches = ttk.Label(
             self.record_frame,
             text=f"{self.record_index + 1} / {self.num_records} Records",
@@ -195,9 +205,127 @@ class ClericalApp(tk.Tk):
         self.non_iterated_labels = []
         self.iterated_labels = []
 
-        self.draw_button_frame()
-        self.draw_record_frame()
         self.draw_tool_frame()
+        self.draw_record_frame()
+        self.draw_button_frame()
+
+    def on_exit(self) -> None:
+        """Ask the user if they want to exit without saving."""
+        # If they click yes.
+        if messagebox.askyesno(
+            title="Exit", message="Are you sure you want to exit WITHOUT saving?"
+        ):
+            # Check if this is the first time they are accessing it.
+            if not self.matching_previously_began & self.checkpoint_counter != 0:
+                # Then rename the file removing their initial and
+                # 'inProgress' tag.
+                os.rename(
+                    self.filename_old,
+                    "_".join(self.filename_old.split("_")[0:-2]) + ".csv",
+                )
+
+            # Close down the application.
+            self.destroy()
+
+    def get_starting_index(self) -> int:
+        """Get the index of the first unreviewed record pair.
+
+        Scan the 'Match' column of the working file and return the index
+        of the first record pair that has not yet been reviewed (i.e.
+        the value is not 0 or 1). If all record pairs have been
+        reviewed, return the index of the last row.
+
+        Returns
+        -------
+        int
+            The index of the first unreviewed record pair, or the last
+            index if all are reviewed.
+        """
+        # Get the index of the 'Match' column.
+        column_index = -2 if int(config["custom_settings"]["comment_box"]) else -1
+
+        # Cycle through the 'Match' column to find the first record pair
+        # that has not been reviewed.
+        for index in range(len(working_file)):
+            match_value = working_file.iloc[index, column_index]
+            if match_value not in (1, 0):
+                return index
+
+        # If no unreviewed record pairs are found, return the last
+        # index.
+        return len(working_file) - 1
+
+    def draw_tool_frame(self) -> None:
+        """Draw the tool_frame."""
+        # Create labels for tools bar.
+        self.separator_tf_1 = ttk.Separator(self.tool_frame, orient="vertical")
+        self.separator_tf_1.grid(
+            row=0, column=3, rowspan=1, sticky="ns", padx=10, pady=5
+        )
+        self.separator_tf_2 = ttk.Separator(self.tool_frame, orient="vertical")
+        self.separator_tf_2.grid(
+            row=0, column=7, rowspan=1, sticky="ns", padx=10, pady=5
+        )
+
+        # Back button.
+        back_symbol = "\u23ce"
+        self.back_button = tk.Button(
+            self.button_frame,
+            text=f"Back {back_symbol}",
+            font=f"Helvetica {self.text_size}",
+            command=lambda: self.go_back(),
+        )
+        self.back_button.grid(row=0, column=2, columnspan=1, padx=15, pady=10)
+        # Show hide differences.
+        self.show_hide_diff_button = tk.Button(
+            self.tool_frame,
+            text="Show/Hide Differences",
+            font=f"Helvetica {self.text_size}",
+            command=lambda: self.show_hide_differences(),
+        )
+        self.show_hide_diff_button.grid(row=0, column=2, columnspan=1, padx=5, pady=5)
+        # Change text size buttons.
+        increase_text_size_symbol = "\U0001f5da"
+        decrease_text_size_symbol = "\U0001f5db"
+
+        self.text_smaller_button = tk.Button(
+            self.tool_frame,
+            text=f"{decrease_text_size_symbol}-",
+            font=f"Helvetica {self.text_size + 3}",
+            height=1,
+            width=3,
+            command=lambda: self.change_text_size(0),
+        )
+        self.text_smaller_button.grid(row=0, column=4, sticky="e", pady=5)
+        self.text_bigger_button = tk.Button(
+            self.tool_frame,
+            text=f"{increase_text_size_symbol}+",
+            height=1,
+            width=3,
+            font=f"Helvetica {self.text_size + 3}",
+            command=lambda: self.change_text_size(1),
+        )
+        self.text_bigger_button.grid(row=0, column=5, sticky="w", pady=5, padx=2)
+        # Make text bold button.
+        bold_symbol = "\U0001d5d5"
+        self.bold_button = tk.Button(
+            self.tool_frame,
+            text=f"{bold_symbol}",
+            font=f"Helvetica {self.text_size + 3}",
+            height=1,
+            width=3,
+            command=lambda: self.make_text_bold(),
+        )
+        self.bold_button.grid(row=0, column=6, sticky="w", pady=5)
+        # Save and close button.
+        save_symbol = "\U0001f4be"
+        self.save_button = tk.Button(
+            self.tool_frame,
+            text=f"Save and Close {save_symbol}",
+            font=f"Helvetica {self.text_size}",
+            command=lambda: self.save_and_close(),
+        )
+        self.save_button.grid(row=0, column=8, columnspan=1, sticky="e", padx=5, pady=5)
 
     def draw_record_frame(self) -> None:
         """Draw the record frame."""
@@ -435,80 +563,6 @@ class ClericalApp(tk.Tk):
                     config["custom_settings"]["comment_values"]
                 ).split(",")
 
-        # Tool frame.
-
-    def draw_tool_frame(self) -> None:
-        """Draw the tool_frame."""
-        # Create labels for tools bar.
-        self.separator_tf_1 = ttk.Separator(self.tool_frame, orient="vertical")
-        self.separator_tf_1.grid(
-            row=0, column=3, rowspan=1, sticky="ns", padx=10, pady=5
-        )
-        self.separator_tf_2 = ttk.Separator(self.tool_frame, orient="vertical")
-        self.separator_tf_2.grid(
-            row=0, column=7, rowspan=1, sticky="ns", padx=10, pady=5
-        )
-
-        # Back button.
-        back_symbol = "\u23ce"
-        self.back_button = tk.Button(
-            self.button_frame,
-            text=f"Back {back_symbol}",
-            font=f"Helvetica {self.text_size}",
-            command=lambda: self.go_back(),
-        )
-        self.back_button.grid(row=0, column=2, columnspan=1, padx=15, pady=10)
-        # Show hide differences.
-        self.show_hide_diff_button = tk.Button(
-            self.tool_frame,
-            text="Show/Hide Differences",
-            font=f"Helvetica {self.text_size}",
-            command=lambda: self.show_hide_differences(),
-        )
-        self.show_hide_diff_button.grid(row=0, column=2, columnspan=1, padx=5, pady=5)
-        # Change text size buttons.
-        increase_text_size_symbol = "\U0001f5da"
-        decrease_text_size_symbol = "\U0001f5db"
-
-        self.text_smaller_button = tk.Button(
-            self.tool_frame,
-            text=f"{decrease_text_size_symbol}-",
-            font=f"Helvetica {self.text_size + 3}",
-            height=1,
-            width=3,
-            command=lambda: self.change_text_size(0),
-        )
-        self.text_smaller_button.grid(row=0, column=4, sticky="e", pady=5)
-        self.text_bigger_button = tk.Button(
-            self.tool_frame,
-            text=f"{increase_text_size_symbol}+",
-            height=1,
-            width=3,
-            font=f"Helvetica {self.text_size + 3}",
-            command=lambda: self.change_text_size(1),
-        )
-        self.text_bigger_button.grid(row=0, column=5, sticky="w", pady=5, padx=2)
-        # Make text bold button.
-        bold_symbol = "\U0001d5d5"
-        self.bold_button = tk.Button(
-            self.tool_frame,
-            text=f"{bold_symbol}",
-            font=f"Helvetica {self.text_size + 3}",
-            height=1,
-            width=3,
-            command=lambda: self.make_text_bold(),
-        )
-        self.bold_button.grid(row=0, column=6, sticky="w", pady=5)
-        # Save and close button.
-        save_symbol = "\U0001f4be"
-        self.save_button = tk.Button(
-            self.tool_frame,
-            text=f"Save and Close {save_symbol}",
-            font=f"Helvetica {self.text_size}",
-            command=lambda: self.save_and_close(),
-        )
-        self.save_button.grid(row=0, column=8, columnspan=1, sticky="e", padx=5, pady=5)
-
     def show_hide_differences(self) -> None:
         """Toggle show hide differences."""
         if not self.show_hide_diff:
@@ -645,34 +699,6 @@ class ClericalApp(tk.Tk):
             self.text_bold = ""
 
         self.update_gui()
-
-    def get_starting_index(self) -> int:
-        """Get the index of the first unreviewed record pair.
-
-        Scan the 'Match' column of the working file and return the index
-        of the first record pair that has not yet been reviewed (i.e.
-        the value is not 0 or 1). If all record pairs have been
-        reviewed, return the index of the last row.
-
-        Returns
-        -------
-        int
-            The index of the first unreviewed record pair, or the last
-            index if all are reviewed.
-        """
-        # Get the index of the 'Match' column.
-        column_index = -2 if int(config["custom_settings"]["comment_box"]) else -1
-
-        # Cycle through the 'Match' column to find the first record pair
-        # that has not been reviewed.
-        for index in range(len(working_file)):
-            match_value = working_file.iloc[index, column_index]
-            if match_value not in (1, 0):
-                return index
-
-        # If no unreviewed record pairs are found, return the last
-        # index.
-        return len(working_file) - 1
 
     def update_gui(self) -> None:
         """Update the GUI labels based on the records."""
@@ -888,24 +914,6 @@ class ClericalApp(tk.Tk):
 
         # Clear record frame.
         self.update_gui()
-
-    def on_exit(self) -> None:
-        """Ask the user if they want to exit without saving."""
-        # If they click yes.
-        if messagebox.askyesno(
-            title="Exit", message="Are you sure you want to exit WITHOUT saving?"
-        ):
-            # Check if this is the first time they are accessing it.
-            if not self.matching_previously_began & self.checkpoint_counter != 0:
-                # Then rename the file removing their initial and
-                # 'inProgress' tag.
-                os.rename(
-                    self.filename_old,
-                    "_".join(self.filename_old.split("_")[0:-2]) + ".csv",
-                )
-
-            # Close down the application.
-            self.destroy()
 
 
 if __name__ == "__main__":
