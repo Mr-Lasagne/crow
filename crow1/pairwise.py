@@ -11,8 +11,6 @@ common area so the rest of your clerical reviewers can access it. DO NOT
 forget to save this file as read-only.
 """
 
-from __future__ import annotations
-
 import configparser
 import getpass
 import os
@@ -91,8 +89,8 @@ class ClericalApp(tk.Tk):
 
         # Create the separate frames:
         # 1. Tool frame.
-        self.toolFrame = ttk.LabelFrame(self, text="Tools:")
-        self.toolFrame.grid(
+        self.tool_frame = ttk.LabelFrame(self, text="Tools")
+        self.tool_frame.grid(
             row=0, column=0, columnspan=1, sticky="ew", padx=10, pady=10
         )
 
@@ -288,7 +286,8 @@ class ClericalApp(tk.Tk):
         # 2. Create a list of the dataset names and differentiate the
         #    first from the rest.
         name_of_datasets = [
-            config["dataset_names"][dset] for dset in config.options("dataset_names")
+            config["dataset_names"][dataset_name]
+            for dataset_name in config.options("dataset_names")
         ]
 
         # Grab the dataset names that need to be highlighted if the
@@ -303,18 +302,18 @@ class ClericalApp(tk.Tk):
 
         # Create some dictionary variables to hold the highlighter and
         # comparator rows.
-        self.datarow_to_compare = {}
-        self.datarows_to_highlight = {}
+        self.data_row_to_compare = {}
+        self.data_rows_to_highlight = {}
 
         # 3. Create each row label and position them in the
         #    record_frame.
         i = 0
 
-        for columnfile_title in config.options("columnfile_info_and_order"):
+        for column_file_title in config.options("column_file_info_and_order"):
             # Remove spaces from the user input and split them into
             # different components.
             col_header = (
-                config["columnfile_info_and_order"][columnfile_title]
+                config["column_file_info_and_order"][column_file_title]
                 .replace(" ", "")
                 .split(",")
             )
@@ -337,7 +336,7 @@ class ClericalApp(tk.Tk):
             # the label on.
             for name in name_of_datasets:
                 if col_header[1] == name:
-                    # Colheader has matched.
+                    # Column header has matched.
 
                     # Position it on the screen.
                     exec(
@@ -347,22 +346,22 @@ class ClericalApp(tk.Tk):
                     # Check whether it is a dataset row to highlight or
                     # not.
                     if col_header[1] in dataset_names_to_highlight:
-                        if col_header[2] in self.datarows_to_highlight:
-                            self.datarows_to_highlight[col_header[2]].append(
+                        if col_header[2] in self.data_rows_to_highlight:
+                            self.data_rows_to_highlight[col_header[2]].append(
                                 col_header[0]
                             )
 
                         else:
-                            self.datarows_to_highlight[col_header[2]] = [col_header[0]]
+                            self.data_rows_to_highlight[col_header[2]] = [col_header[0]]
 
                     else:
-                        self.datarow_to_compare[col_header[2]] = [col_header[0]]
+                        self.data_row_to_compare[col_header[2]] = [col_header[0]]
                     # Break the for loop if name has been resolved.
                     break
 
                 else:
-                    # Colheader has not matched: Increase to the next
-                    # row.
+                    # Column header has not matched: Increase to the
+                    # next row.
                     i += 1
 
             # Reset the iterator variable.
@@ -441,11 +440,11 @@ class ClericalApp(tk.Tk):
     def draw_tool_frame(self) -> None:
         """Draw the tool_frame."""
         # Create labels for tools bar.
-        self.separator_tf_1 = ttk.Separator(self.toolFrame, orient="vertical")
+        self.separator_tf_1 = ttk.Separator(self.tool_frame, orient="vertical")
         self.separator_tf_1.grid(
             row=0, column=3, rowspan=1, sticky="ns", padx=10, pady=5
         )
-        self.separator_tf_2 = ttk.Separator(self.toolFrame, orient="vertical")
+        self.separator_tf_2 = ttk.Separator(self.tool_frame, orient="vertical")
         self.separator_tf_2.grid(
             row=0, column=7, rowspan=1, sticky="ns", padx=10, pady=5
         )
@@ -460,19 +459,19 @@ class ClericalApp(tk.Tk):
         )
         self.back_button.grid(row=0, column=2, columnspan=1, padx=15, pady=10)
         # Show hide differences.
-        self.showhidediff = tk.Button(
-            self.toolFrame,
+        self.show_hide_diff_button = tk.Button(
+            self.tool_frame,
             text="Show/Hide Differences",
             font=f"Helvetica {self.text_size}",
             command=lambda: self.show_hide_differences(),
         )
-        self.showhidediff.grid(row=0, column=2, columnspan=1, padx=5, pady=5)
+        self.show_hide_diff_button.grid(row=0, column=2, columnspan=1, padx=5, pady=5)
         # Change text size buttons.
         increase_text_size_symbol = "\U0001f5da"
         decrease_text_size_symbol = "\U0001f5db"
 
         self.text_smaller_button = tk.Button(
-            self.toolFrame,
+            self.tool_frame,
             text=f"{decrease_text_size_symbol}-",
             font=f"Helvetica {self.text_size + 3}",
             height=1,
@@ -481,7 +480,7 @@ class ClericalApp(tk.Tk):
         )
         self.text_smaller_button.grid(row=0, column=4, sticky="e", pady=5)
         self.text_bigger_button = tk.Button(
-            self.toolFrame,
+            self.tool_frame,
             text=f"{increase_text_size_symbol}+",
             height=1,
             width=3,
@@ -492,7 +491,7 @@ class ClericalApp(tk.Tk):
         # Make text bold button.
         bold_symbol = "\U0001d5d5"
         self.bold_button = tk.Button(
-            self.toolFrame,
+            self.tool_frame,
             text=f"{bold_symbol}",
             font=f"Helvetica {self.text_size + 3}",
             height=1,
@@ -503,7 +502,7 @@ class ClericalApp(tk.Tk):
         # Save and close button.
         save_symbol = "\U0001f4be"
         self.save_button = tk.Button(
-            self.toolFrame,
+            self.tool_frame,
             text=f"Save and Close {save_symbol}",
             font=f"Helvetica {self.text_size}",
             command=lambda: self.save_and_close(),
@@ -520,11 +519,11 @@ class ClericalApp(tk.Tk):
             # differences and their label names.
             self.difference_col_label_names = {}
 
-            # For key in datarows that need to be highlighted.
-            for key in self.datarows_to_highlight:
-                # For the values in datarows that need to be
+            # For key in data rows that need to be highlighted.
+            for key in self.data_rows_to_highlight:
+                # For the values in data rows that need to be
                 # highlighted.
-                for vals in self.datarows_to_highlight[key]:
+                for vals in self.data_rows_to_highlight[key]:
                     # Some empty variables to control the flow of the
                     # difference indicator.
                     char_consistent = []
@@ -536,7 +535,7 @@ class ClericalApp(tk.Tk):
                     # For each character between the first row label and
                     # the rows underneath it.
                     for char_comparison, char_highlight in zip(
-                        working_file[self.datarow_to_compare[key][0]][
+                        working_file[self.data_row_to_compare[key][0]][
                             self.record_index
                         ],
                         working_file[f"{vals}"][self.record_index],
@@ -555,7 +554,7 @@ class ClericalApp(tk.Tk):
                             # If we are at the end of string comparison.
                             if count == min(
                                 len(
-                                    working_file[self.datarow_to_compare[key][0]][
+                                    working_file[self.data_row_to_compare[key][0]][
                                         self.record_index
                                     ]
                                 )
@@ -588,12 +587,14 @@ class ClericalApp(tk.Tk):
                     # If length of the comparator is less highlighter
                     # make it yellow as well.
                     if len(
-                        working_file[self.datarow_to_compare[key][0]][self.record_index]
+                        working_file[self.data_row_to_compare[key][0]][
+                            self.record_index
+                        ]
                     ) < len(working_file[f"{vals}"][self.record_index]):
                         char_consistent.append(
                             [
                                 len(
-                                    working_file[self.datarow_to_compare[key][0]][
+                                    working_file[self.data_row_to_compare[key][0]][
                                         self.record_index
                                     ]
                                 ),
@@ -685,7 +686,7 @@ class ClericalApp(tk.Tk):
             for widget in self.record_frame.winfo_children():
                 widget.destroy()
 
-            for widget in self.toolFrame.winfo_children():
+            for widget in self.tool_frame.winfo_children():
                 widget.destroy()
 
             for widget in self.button_frame.winfo_children():
@@ -780,10 +781,10 @@ class ClericalApp(tk.Tk):
             self.non_match_button.configure(state="disabled")
             # Present a message on the screen informing the user that
             # matching is finished.
-            self.matchdone = ttk.Label(
+            self.match_done = ttk.Label(
                 self, text="Matching Finished. Press save and close.", foreground="red"
             )
-            self.matchdone.grid(row=1, column=0, columnspan=1)
+            self.match_done.grid(row=1, column=0, columnspan=1)
 
             return 1
         else:
@@ -846,7 +847,7 @@ class ClericalApp(tk.Tk):
         # If they have reached the end of matching.
         if self.record_index == len(working_file):
             # Take away the Matching is finished message.
-            self.matchdone.grid_forget()
+            self.match_done.grid_forget()
             # Reactivate the buttons.
             self.match_button.configure(state="normal")
             self.non_match_button.configure(state="normal")
@@ -913,13 +914,13 @@ if __name__ == "__main__":
     config.read("pairwise_config.ini")
 
     # Get the initial directory.
-    initdir = config["matching_files_details"]["file_pathway"]
+    initial_directory = config["matching_files_details"]["file_pathway"]
 
     # Get the user credentials.
     user = getpass.getuser()
 
     # Run the intro window.
-    intro_window = IntroWindow(initdir)
+    intro_window = IntroWindow(initial_directory)
     intro_window.mainloop()
 
     # Check if the user running it has selected this file before (this
