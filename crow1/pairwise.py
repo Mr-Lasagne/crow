@@ -114,58 +114,15 @@ class ClericalApp(tk.Tk):
         # Initialise file names.
         self.filename_done = filename_done
         self.filename_old = filename_old
+        self.working_file = working_file
+        self.num_records = len(working_file)
 
         # Create an exit protocol for if user presses the 'X' (top-right
         # corner of the window).
         self.protocol("WM_DELETE_WINDOW", self.on_exit)
 
-        # Create a match column if one doesn't exist. Replace any
-        # missing values (NA) with blank spaces.
-        if {"Match"}.issubset(working_file.columns):
-            # Convert all columns apart from Match and Comments (if
-            # specified) to string.
-            for col_header in working_file.columns:
-                if col_header in ("Match", "Comments"):
-                    pass
-                else:
-                    # Convert to string.
-                    working_file[col_header] = working_file[col_header].astype(str)
-                    # Remove nan values.
-                    for i in range(len(working_file)):
-                        if working_file[col_header][i] == "nan":
-                            working_file.at[i, col_header] = ""
-
-            working_file.fillna("", inplace=True)
-
-            # Variable indicates whether user has returned to this file
-            # or not.
-            self.matching_previously_began = 1
-        else:
-            working_file["Match"] = ""
-            # Create the comment box column if column header is
-            # specified.
-            if int(config["custom_settings"]["comment_box"]):
-                working_file["Comments"] = ""
-
-            # Convert all columns apart from Match and Comments (if
-            # specified) to string.
-            for col_header in working_file.columns:
-                if col_header in ("Match", "Comments"):
-                    pass
-                else:
-                    # Convert to string.
-                    working_file[col_header] = working_file[col_header].astype(str)
-                    # Remove nan values.
-                    for i in range(len(working_file)):
-                        if working_file[col_header][i] == "nan":
-                            working_file.at[i, col_header] = ""
-
-            working_file.fillna("", inplace=True)
-
-            self.matching_previously_began = 0
-
-        # Count how many records are in the CSV file.
-        self.num_records = len(working_file)
+        # Add the columns necessary for clerical review.
+        self.add_review_columns()
 
         # A counter of the number of checkpoint saves.
         self.checkpoint_counter = 0
@@ -224,8 +181,59 @@ class ClericalApp(tk.Tk):
                     "_".join(self.filename_old.split("_")[0:-2]) + ".csv",
                 )
 
-            # Close down the application.
+            # Close the application.
             self.destroy()
+
+    def add_review_columns(self) -> None:
+        """Add the columns necessary for clerical review."""
+        # Create a match column if one doesn't exist. Replace any
+        # missing values (NA) with blank spaces.
+        if {"Match"}.issubset(self.working_file.columns):
+            # Convert all columns apart from Match and Comments (if
+            # specified) to string.
+            for col_header in self.working_file.columns:
+                if col_header in ("Match", "Comments"):
+                    pass
+                else:
+                    # Convert to string.
+                    self.working_file[col_header] = self.working_file[
+                        col_header
+                    ].astype(str)
+                    # Remove nan values.
+                    for i in range(len(self.working_file)):
+                        if self.working_file[col_header][i] == "nan":
+                            self.working_file.at[i, col_header] = ""
+
+            self.working_file.fillna("", inplace=True)
+
+            # Variable indicates whether user has returned to this file
+            # or not.
+            self.matching_previously_began = 1
+        else:
+            self.working_file["Match"] = ""
+            # Create the comment box column if column header is
+            # specified.
+            if int(config["custom_settings"]["comment_box"]):
+                self.working_file["Comments"] = ""
+
+            # Convert all columns apart from Match and Comments (if
+            # specified) to string.
+            for col_header in self.working_file.columns:
+                if col_header in ("Match", "Comments"):
+                    pass
+                else:
+                    # Convert to string.
+                    self.working_file[col_header] = self.working_file[
+                        col_header
+                    ].astype(str)
+                    # Remove nan values.
+                    for i in range(len(self.working_file)):
+                        if self.working_file[col_header][i] == "nan":
+                            self.working_file.at[i, col_header] = ""
+
+            self.working_file.fillna("", inplace=True)
+
+            self.matching_previously_began = 0
 
     def get_starting_index(self) -> int:
         """Get the index of the first unreviewed record pair.
@@ -246,14 +254,14 @@ class ClericalApp(tk.Tk):
 
         # Cycle through the 'Match' column to find the first record pair
         # that has not been reviewed.
-        for index in range(len(working_file)):
+        for index in range(self.num_records):
             match_value = working_file.iloc[index, column_index]
             if match_value not in (1, 0):
                 return index
 
         # If no unreviewed record pairs are found, return the last
         # index.
-        return len(working_file) - 1
+        return self.num_records - 1
 
     def draw_tool_frame(self) -> None:
         """Draw the tool_frame."""
