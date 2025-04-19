@@ -97,21 +97,27 @@ class ClericalApp(tk.Tk):
         super().__init__()
         self.title("CROW1")
 
-        # Set up frames.
-        self.tool_frame = ttk.Labelframe(self, text="Tools")
-        self.tool_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
-
-        self.record_frame = ttk.Labelframe(self, text="Current Record Pair")
-        self.record_frame.grid(row=2, column=0, padx=10, pady=3)
-
-        self.button_frame = ttk.Frame(self)
-        self.button_frame.grid(row=3, column=0, padx=10, pady=3)
-
-        # Initialise variables.
+        # Initialise file variables.
         self.filename_done = filename_done
         self.filename_old = filename_old
         self.working_file = working_file
         self.num_records = len(working_file)
+
+        # Initialise checkpoint counter.
+        self.checkpoint_counter = 0
+
+        # Initialise text variables.
+        self.text_size = 10
+        self.text_bold_boolean = 0
+        self.text_bold = ""
+
+        # Initialise highlighting variables.
+        self.show_hide_diff = 0
+        self.difference_col_label_names = {}
+
+        # Initialise iteration variables.
+        self.non_iterated_labels = []
+        self.iterated_labels = []
 
         # Create an exit protocol for if user presses the 'X' (top-right
         # corner of the window).
@@ -120,9 +126,6 @@ class ClericalApp(tk.Tk):
         # Add the columns necessary for clerical review.
         self.add_review_columns()
 
-        # A counter of the number of checkpoint saves.
-        self.checkpoint_counter = 0
-
         # Initiate the starting index so that it will go from latest
         # record counter variable for iterating through the CSV file.
         self.record_index = self.get_starting_index()
@@ -130,33 +133,6 @@ class ClericalApp(tk.Tk):
         self.records_per_checkpoint = int(
             config["custom_settings"]["num_records_checkpoint"]
         )
-
-        # Create the text size component.
-        self.text_size = 10
-        self.text_bold_boolean = 0
-        self.text_bold = ""
-
-        # Show or hide differences boolean.
-        self.show_hide_diff = 0
-        self.difference_col_label_names = {}
-
-        # Create the record counter label.
-        self.counter_matches = ttk.Label(
-            self.record_frame,
-            text=f"{self.record_index + 1} / {self.num_records} Records",
-            font="Helvetica 9",
-        )
-        self.counter_matches.grid(
-            row=0,
-            column=len(config.options("column_headers_and_order")),
-            columnspan=1,
-            padx=10,
-            sticky="e",
-        )
-
-        # Create empty lists of labels.
-        self.non_iterated_labels = []
-        self.iterated_labels = []
 
         self.draw_tool_frame()
         self.draw_record_frame()
@@ -261,6 +237,9 @@ class ClericalApp(tk.Tk):
 
     def draw_tool_frame(self) -> None:
         """Draw the tool_frame."""
+        self.tool_frame = ttk.Labelframe(self, text="Tools")
+        self.tool_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
+
         # Create labels for tools bar.
         self.separator_tf_1 = ttk.Separator(self.tool_frame, orient="vertical")
         self.separator_tf_1.grid(
@@ -271,15 +250,6 @@ class ClericalApp(tk.Tk):
             row=0, column=7, rowspan=1, sticky="ns", padx=10, pady=5
         )
 
-        # Back button.
-        back_symbol = "\u23ce"
-        self.back_button = tk.Button(
-            self.button_frame,
-            text=f"Back {back_symbol}",
-            font=f"Helvetica {self.text_size}",
-            command=self.go_back,
-        )
-        self.back_button.grid(row=0, column=2, columnspan=1, padx=15, pady=10)
         # Show hide differences.
         self.show_hide_diff_button = tk.Button(
             self.tool_frame,
@@ -333,12 +303,15 @@ class ClericalApp(tk.Tk):
 
     def draw_record_frame(self) -> None:
         """Draw the record frame."""
+        self.record_frame = ttk.Labelframe(self, text="Current Record Pair")
+        self.record_frame.grid(row=2, column=0, padx=10, pady=3)
+
         row_adder = 0
         separator_adder = 2
 
         self.counter_matches = ttk.Label(
             self.record_frame,
-            text=f"{self.record_index + 1} / {self.num_records} Records",
+            text=f"Record Pair: {self.record_index + 1} / {self.num_records}",
             font="Helvetica 9",
         )
         self.counter_matches.grid(
@@ -510,6 +483,9 @@ class ClericalApp(tk.Tk):
 
     def draw_button_frame(self) -> None:
         """Draw the button_frame."""
+        self.button_frame = ttk.Frame(self)
+        self.button_frame.grid(row=3, column=0, padx=10, pady=3)
+
         # Match/Non-Match buttons.
         self.match_button = tk.Button(
             self.button_frame,
@@ -527,6 +503,16 @@ class ClericalApp(tk.Tk):
             bg="light salmon",
         )
         self.non_match_button.grid(row=0, column=1, columnspan=1, padx=15, pady=10)
+
+        # Back button.
+        back_symbol = "\u23ce"
+        self.back_button = tk.Button(
+            self.button_frame,
+            text=f"Back {back_symbol}",
+            font=f"Helvetica {self.text_size}",
+            command=self.go_back,
+        )
+        self.back_button.grid(row=0, column=2, columnspan=1, padx=15, pady=10)
 
         # Add in the comment widget based on config option.
         if int(config["custom_settings"]["comment_box"]):
