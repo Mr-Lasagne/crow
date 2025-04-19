@@ -106,7 +106,6 @@ class ClericalApp(tk.Tk):
 
         # Initialise the file name variables.
         self.filename_done = filename_done
-
         self.filename_old = filename_old
 
         # Create protocol for if user presses the 'X' (top right).
@@ -646,38 +645,33 @@ class ClericalApp(tk.Tk):
 
         self.update_gui()
 
-    def get_starting_index(self) -> int | None:
-        """Get the first record without a match decision.
+    def get_starting_index(self) -> int:
+        """Get the index of the first unreviewed record pair.
+
+        Scan the 'Match' column of the working file and return the index
+        of the first record pair that has not yet been reviewed (i.e.
+        the value is not 0 or 1). If all record pairs have been
+        reviewed, return the index of the last row.
 
         Returns
         -------
-        i : int
-            Index number that relates to the next record to be matched.
+        int
+            The index of the first unreviewed record pair, or the last
+            index if all are reviewed.
         """
-        # Get a list of index_values.
-        index_values = list(range(0, len(working_file)))
+        # Get the index of the 'Match' column.
+        column_index = -2 if int(config["custom_settings"]["comment_box"]) else -1
 
-        # Cycle through the working_file dataset to determine the next
-        # available record.
+        # Cycle through the 'Match' column to find the first record pair
+        # that has not been reviewed.
+        for index in range(len(working_file)):
+            match_value = working_file.iloc[index, column_index]
+            if match_value not in (1, 0):
+                return index
 
-        # Choose which one to cycle through.
-        if int(config["custom_settings"]["comment_box"]):
-            for i in index_values:
-                if working_file.iloc[i, -2] != 1 and working_file.iloc[i, -2] != 0:
-                    return i
-                elif i == self.num_records - 1:
-                    return i
-                elif working_file.iloc[i, -2] == 1 or working_file.iloc[i, -2] == 0:
-                    pass
-
-        else:
-            for i in index_values:
-                if working_file.iloc[i, -1] != 1 and working_file.iloc[i, -1] != 0:
-                    return i
-                elif i == self.num_records - 1:
-                    return i
-                elif working_file.iloc[i, -1] == 1 or working_file.iloc[i, -1] == 0:
-                    pass
+        # If no unreviewed record pairs are found, return the last
+        # index.
+        return len(working_file) - 1
 
     def update_gui(self) -> None:
         """Update the GUI labels based on the records."""
