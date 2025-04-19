@@ -68,7 +68,6 @@ class IntroWindow(tk.Tk):
         # file.
         self.fileselect = filedialog.askopenfilename(
             initialdir=self.init_dir,
-            title="Please select a file:",
             filetypes=[("CSV files", "*.csv")],
         )
 
