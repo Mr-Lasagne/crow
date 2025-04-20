@@ -1,2 +1,6 @@
+[lint]
+select = ["ALL"]
+ignore = ["COM812", "INP001", "T201", "S311"]
+
 [lint.pydocstyle]
 convention = "numpy"
